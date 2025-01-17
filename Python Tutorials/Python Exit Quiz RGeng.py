@@ -18,11 +18,14 @@ def quad_quiz(x_val, A, B, C):
     return A*x_val**2+B*x_val+C
 
 popt, pcov = curve_fit(quad_quiz, x, y)
-perr = np.sqrt(np.diag(pcov))
+#perr = np.sqrt(np.diag(pcov))
 
 plt.plot(x, quad_quiz(x, popt[0], popt[1], popt[2]), marker = 's', label = "Quadratic Curve Fit")
 plt.xlabel("x values")
 plt.ylabel("y values")
 plt.legend()
+plt.show()
 
-print (popt[0])
+print ("A value:", popt[0])
+print ("B value:", popt[1])
+print ("C value:", popt[2])
