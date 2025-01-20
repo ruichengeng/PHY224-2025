@@ -106,9 +106,9 @@ plt.figure(figsize = (8, 16))
 
 #First subplot corresponding to the original data set and the linear model's fitting.
 plt.subplot(2, 1, 1)
-plt.plot(lin_year, lin_mean, label = "Data (last 20 years)")
+#plt.plot(lin_year, lin_mean, label = "Data (last 20 years)")
 plt.plot(lin_year, linear_model(lin_year, lin_popt[0], lin_popt[1]), label = "Linear Model Curve Fit", color="blue")
-plt.errorbar(lin_year, lin_mean, yerr=lin_unc, capsize=1, fmt = 'none', ecolor = "blue")
+plt.errorbar(lin_year, lin_mean, yerr=lin_unc, capsize=0, fmt = 'none', ecolor = "black", label = "Data (last 20 years)", markersize = 100)
 plt.xlabel("Year")
 plt.ylabel(r'$CO_2\:Level\:(in\:unit\:of\:ppm)$')
 plt.xticks(np.arange(2004, 2023, step = 2))
@@ -153,11 +153,11 @@ plt.show()
 
 # #perr = np.sqrt(np.diag(pcov))
 
-# #plt.plot(year, quad_quiz(year, popt[0], popt[1], popt[2]), label = "Quadratic Curve Fit")
-# #plt.xlabel("x values")
-# #plt.ylabel("y values")
-# #plt.legend()
-# #plt.show()
+# plt.plot(year, quadratic_model(year, quad_popt[0], quad_popt[1], quad_popt[2]), label = "Quadratic Curve Fit")
+# plt.xlabel("x values")
+# plt.ylabel("y values")
+# plt.legend()
+# plt.show()
 
 # #print ("A value:", popt[0])
 # #print ("B value:", popt[1])
