@@ -76,7 +76,7 @@ lin_model_data = lin_year*0
 lin_residual = lin_year*0
 for l in range(len(lin_year)):
     lin_model_data[l]=linear_model(lin_year[l], lin_popt[0], lin_popt[1])
-    lin_residual[l]=lin_model_data[l]-lin_mean[l]
+    lin_residual[l]=lin_mean[l]-lin_model_data[l]
 
 #Initializing the arrays of the expected values from the models after curve fit
 quad_model_data = year*0
@@ -95,9 +95,9 @@ for i in range (len(year)):
     pow_model_data[i]=power_model(year[i], pow_popt[0], pow_popt[1], pow_popt[2])
     exp_model_data[i]=exponential_model(year[i], exp_popt[0], exp_popt[1], exp_popt[2])
     #Then calculate the residuals
-    quad_residual[i] = quad_model_data[i]-mean[i]
-    pow_residual[i] = pow_model_data[i]-mean[i]
-    exp_residual[i] = exp_model_data[i]-mean[i]
+    quad_residual[i] = mean[i]-quad_model_data[i]
+    pow_residual[i] = mean[i]-pow_model_data[i]
+    exp_residual[i] = mean[i]-exp_model_data[i]
 
 
 #Plotting the datas and models and the residues
