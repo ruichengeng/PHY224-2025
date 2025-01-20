@@ -108,7 +108,7 @@ plt.figure(figsize = (8, 16))
 plt.subplot(2, 1, 1)
 #plt.plot(lin_year, lin_mean, label = "Data (last 20 years)")
 plt.plot(lin_year, linear_model(lin_year, lin_popt[0], lin_popt[1]), label = "Linear Model Curve Fit", color="blue")
-plt.errorbar(lin_year, lin_mean, yerr=lin_unc, capsize=0, fmt = 'none', ecolor = "black", label = "Data (last 20 years)", marker = ".", markersize = 100)
+plt.errorbar(lin_year, lin_mean, yerr=lin_unc, fmt='o', capsize=0, ecolor = "black", label = "Data (last 20 years)", marker = ".", markersize = 10)
 plt.xlabel("Year")
 plt.ylabel(r'$CO_2\:Level\:(in\:unit\:of\:ppm)$')
 plt.xticks(np.arange(2004, 2023, step = 2))
@@ -119,7 +119,6 @@ plt.title("Mean CO$_2$ level with linear model curve fitting")
 lin_zero_err = np.zeros(len(lin_year))
 plt.subplot(2, 1, 2)
 plt.plot(lin_year, lin_zero_err)
-plt.plot(lin_year, lin_residual, label = "Residual of the linear model versus actual data")
 
 
 
@@ -132,7 +131,9 @@ plt.plot(lin_year, lin_residual, label = "Residual of the linear model versus ac
 
 
 
-
+tempError = np.zeros(len(lin_year))
+plt.errorbar(lin_year, lin_residual, yerr=tempError, fmt='o', capsize=0, color = "red", label = "Data (last 20 years)", marker = ".", markersize = 10)
+#plt.plot(lin_year, lin_residual, label = "Residual of the linear model versus actual data", marker = ".", color = "red")
 
 plt.xlabel("Year")
 plt.ylabel(r'$Error\:of\:CO_2\:Level\:in\:the\:linear\:model\:(in\:unit\:of\:ppm)$')
