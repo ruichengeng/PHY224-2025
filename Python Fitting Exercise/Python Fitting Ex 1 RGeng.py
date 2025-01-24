@@ -72,7 +72,7 @@ lin_popt, lin_pcov = curve_fit(linear_model, lin_year, lin_mean, sigma = lin_unc
 quad_popt, quad_pcov = curve_fit(quadratic_model, year, mean, sigma = unc, absolute_sigma=True)
 
 #Power model curve fitting
-pow_popt, pow_pcov = curve_fit(power_model, year, mean, sigma = unc, absolute_sigma=True)
+pow_popt, pow_pcov = curve_fit(power_model, year, mean, p0=(0.3, 1.4), sigma = unc, absolute_sigma=True)
 
 #Exponential model curve fitting
 #Here we are providing the initial value estimating value of A = 1, B = almost 0, C = 200 (this is still below the smallest co2 level in the given data set)
