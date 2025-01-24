@@ -28,13 +28,15 @@ year, mean, unc = np.loadtxt("co2_annmean_mlo.csv", delimiter = ',', skiprows=44
 
 #Linear fitting model using the same style as the formula f(x)=ax+b
 def linear_model(x_val, A, B):
-    return A*x_val+B
+    return A*(x_val-2010)+B
 
 #Power fitting models:
 
 #Quadratic fitting model using the same style as f(x)=ax^2+bx+c
-def quadratic_model(x_val, A, B, C):
-    return A*x_val**2+B*x_val+C
+# def quadratic_model(x_val, A, B, C):
+#     return A*(x_val-2005)**2+B*(x_val-2005)+C
+def quadratic_model(x_val, A, B):
+    return A*(x_val-1959)**2+B*(x_val-1959)+mean[0]
 
 
 #Note for both power_model and exponential_model we encountered the runtime error:
@@ -42,12 +44,14 @@ def quadratic_model(x_val, A, B, C):
 #To fix this, we introduced the term -1959 to x_val to fit the model aka x_val[0]=1959-1959 = 0 for the computer to be able to handle the simulation.
 
 #Power fitting model using the same style as f(x)=ax^b+c
-def power_model(x_val, A, B, C):
-    return A*(x_val-1959)**B+C
+# def power_model(x_val, A, B, C):
+#     return A*(x_val-1959)**B+C
+def power_model(x_val, A, B):
+    return A*(x_val-1959)**B+mean[0]
     
 #Exponential fitting model using the same style as f(x)=ae^(bx)+c
-def exponential_model(x_val, A, B, C):
-    return A*np.exp(B*(x_val-1959))+C
+# def exponential_model(x_val, A, B, C):
+#     return A*np.exp(B*(x_val-2005))+C
 
 
 #Using the curve_fit function for each of the above models
@@ -67,7 +71,7 @@ pow_popt, pow_pcov = curve_fit(power_model, year, mean)
 
 #Exponential model curve fitting
 #Here we are providing the initial value estimating value of A = 1, B = almost 0, C = 200 (this is still below the smallest co2 level in the given data set)
-exp_popt, exp_pcov = curve_fit(exponential_model, year, mean, p0=(1, 1e-6, 200))
+# exp_popt, exp_pcov = curve_fit(exponential_model, year, mean, p0=(1, 1e-6, 200))
 
 
 #Model values and their residuals
@@ -87,19 +91,20 @@ quad_residual = year*0
 pow_model_data = year*0
 pow_residual = year*0
 
-exp_model_data = year*0
-exp_residual = year*0
+# exp_model_data = year*0
+# exp_residual = year*0
 
 #Calculating the expected values and finding their respective residuals
 for i in range (len(year)):
     #First the expected values
-    quad_model_data[i]=quadratic_model(year[i], quad_popt[0], quad_popt[1], quad_popt[2])
-    pow_model_data[i]=power_model(year[i], pow_popt[0], pow_popt[1], pow_popt[2])
-    exp_model_data[i]=exponential_model(year[i], exp_popt[0], exp_popt[1], exp_popt[2])
+    # quad_model_data[i]=quadratic_model(year[i], quad_popt[0], quad_popt[1], quad_popt[2])
+    quad_model_data[i]=quadratic_model(year[i], quad_popt[0], quad_popt[1])
+    pow_model_data[i]=power_model(year[i], pow_popt[0], pow_popt[1])
+    # exp_model_data[i]=exponential_model(year[i], exp_popt[0], exp_popt[1], exp_popt[2])
     #Then calculate the residuals
     quad_residual[i] = mean[i]-quad_model_data[i]
     pow_residual[i] = mean[i]-pow_model_data[i]
-    exp_residual[i] = mean[i]-exp_model_data[i]
+    # exp_residual[i] = mean[i]-exp_model_data[i]
 
 
 #Calculating the uncertainties in our models
@@ -116,7 +121,8 @@ for w in range(len(lin_unc_total)):
     #Apply point 1 in the lecture slide to calculate the model's uncertainty counting (+b)
     #Since uncertainty of b is sqrt(lin_pcov[1,1]),if we square it for the uncertainty, we simply get lin_pcov[1,1]
     
-    temp_unc_2=np.sqrt(temp_unc_1**2+lin_pcov[1]) #This is our model's uncertainty
+    # temp_unc_2=np.sqrt(temp_unc_1**2+lin_pcov[1]) #This is our model's uncertainty
+    temp_unc_2=np.sqrt(temp_unc_1**2+np.sqrt(lin_pcov[1]**2)) #This is our model's uncertainty
     
     #Now calculate the unc of the residual by applying point 1 of the slide again
     temp_unc_total_per_year = np.sqrt(lin_unc[w]**2+temp_unc_2**2)
@@ -133,8 +139,6 @@ for w in range(len(lin_unc_total)):
 
 #Power Model
 
-
-#Exponential Model
 
 
 #Plotting the datas and models and the residues
@@ -163,8 +167,85 @@ plt.legend()
 plt.title("Residuals from the linear model")
 plt.show()
 
+linear_chi2=np.sum( (lin_mean - lin_model_data)**2 / lin_unc**2 )
+linear_reduced_chi2 = linear_chi2/(lin_mean.size - 2)
+
+print("Linear Chi squared ", linear_chi2)
+print("Linear Chi reduced squared ", linear_reduced_chi2)
+
+###################################################################################################################################################
+#Plotting for the quadratic model
+plt.figure(figsize = (8, 16))
+
+#First subplot corresponding to the original data set and the linear model's fitting.
+plt.subplot(2, 1, 1)
+# plt.plot(year, quadratic_model(year, quad_popt[0], quad_popt[1], quad_popt[2]), label = "Quadratic Model Curve Fit", color="blue")
+plt.plot(year, quadratic_model(year, quad_popt[0], quad_popt[1]), label = "Quadratic Model Curve Fit", color="blue")
+plt.errorbar(year, mean, yerr=unc, fmt='o', capsize=0, ecolor = "black", label = "Data", marker = ".", markersize = 10)
+plt.xlabel("Year")
+plt.ylabel(r'$CO_2\:Level\:(in\:unit\:of\:ppm)$')
+plt.xticks(np.arange(1959, 2023, step = 5))
+plt.legend()
+plt.title("Mean CO$_2$ level with Quadratic model curve fitting")
+
+#Second subplot for the residuals, with a newly defined variable lin_zero_err as the line where the residual is 0.
+zero_residual_line = np.zeros(len(year))
+plt.subplot(2, 1, 2)
+plt.plot(year, zero_residual_line)
+plt.plot(year, quad_residual,'o', label = "Residual of the quadratic model versus actual data", marker = ".", color = "red")
+plt.xlabel("Year")
+plt.ylabel(r'$Error\:of\:CO_2\:Level\:in\:the\:quadratic\:model\:(in\:unit\:of\:ppm)$')
+plt.xticks(np.arange(1959, 2023, step = 5))
+plt.legend()
+plt.title("Residuals from the quadratic model")
+plt.show()
+
+quad_chi2=np.sum( (mean - quad_model_data)**2 / unc**2 )
+quad_reduced_chi2 = quad_chi2/(mean.size - 2)
+
+print("Quadratic Chi squared ", quad_chi2)
+print("Quadratic Chi reduced squared ", quad_reduced_chi2)
 
 
+###################################################################################################################################################
+#Plotting for the power model
+plt.figure(figsize = (8, 16))
+
+#First subplot corresponding to the original data set and the linear model's fitting.
+plt.subplot(2, 1, 1)
+plt.plot(year, power_model(year, pow_popt[0], pow_popt[1]), label = "Power Model Curve Fit", color="blue")
+plt.errorbar(year, mean, yerr=unc, fmt='o', capsize=0, ecolor = "black", label = "Data", marker = ".", markersize = 10)
+plt.xlabel("Year")
+plt.ylabel(r'$CO_2\:Level\:(in\:unit\:of\:ppm)$')
+plt.xticks(np.arange(1959, 2023, step = 5))
+plt.legend()
+plt.title("Mean CO$_2$ level with Power model curve fitting")
+
+#Second subplot for the residuals, with a newly defined variable lin_zero_err as the line where the residual is 0.
+zero_residual_line = np.zeros(len(year))
+plt.subplot(2, 1, 2)
+plt.plot(year, zero_residual_line)
+plt.plot(year, pow_residual,'o', label = "Residual of the power model versus actual data", marker = ".", color = "red")
+plt.xlabel("Year")
+plt.ylabel(r'$Error\:of\:CO_2\:Level\:in\:the\:power\:model\:(in\:unit\:of\:ppm)$')
+plt.xticks(np.arange(1959, 2023, step = 5))
+plt.legend()
+plt.title("Residuals from the power model")
+plt.show()
+
+power_chi2=np.sum( (mean - pow_model_data)**2 / unc**2 )
+power_reduced_chi2 = power_chi2/(mean.size - 2)
+
+print("Power Chi squared ", power_chi2)
+print("Power Chi reduced squared ", power_reduced_chi2)
+
+
+
+####################################################################################################################################################
+
+##########################PLEASE IGNORE THE FOLLOWING###############################################################################################
+
+#Scratches and things might be usedful for later project(s)
 
 # print ("A value:", popt2[0])
 # print ("B value:", popt2[1])
