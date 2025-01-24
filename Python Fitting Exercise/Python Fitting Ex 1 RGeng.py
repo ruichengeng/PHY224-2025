@@ -6,17 +6,20 @@ Created by Rui (Richard) Chen Geng Li
 Student number: 1003048454
 
 Code created for PHY224 Fitting Exercise 1
+Prof. Sergio De La Barrera
+Ta: Weigeng Peng
 Due Sunday January 20th, 2025
 """
 
 #Note:
 #The structure of this code is ordered in a similar fassion as the bullet point listed in the IntroFitting.pdf file
-#With the exception that at the very end of this script, there is a distinguishable section of scratches for testing out ideas and possibly saving them for future uses. Please disregard the scratch section for this exercise.
+#With rare exceptions such as that at the very end of this script, there is a distinguishable section of scratches for testing out ideas, unused models and possibly saving them for future uses. Please disregard that scratch section for this exercise.
 
 
-import numpy as np
-from scipy.optimize import curve_fit
-import matplotlib.pyplot as plt
+#Necessary modules
+import numpy as np #Useful helper functions that can convert our data into formats acceptable to the curve fitting components.
+from scipy.optimize import curve_fit #The main component of this fitting exercise
+import matplotlib.pyplot as plt #Handles the plotting aspect of this lab
 
 #Imports and reads the data from file named co2_annmean_mlo for the annual average of daily measurement of atmospheric co2 from 1960 to 2023 from the top of Mauna Loa in Hawaii.
 #Below: We skips 44 rows so that the first data entry is from 1959 aka the first row containing data
@@ -28,43 +31,42 @@ import matplotlib.pyplot as plt
 year, mean, unc = np.loadtxt("co2_annmean_mlo.csv", delimiter = ',', skiprows=44, unpack=True)
 
 
-#Here we define the different types of fitting models, the independent variable is x_val and coefficients A, B, and C where they are applicable
+######################################################################################################################################################################################################################################
+
+
+#Here we define the different types of fitting models, the independent variable is x_val and coefficients A, and B where they are applicable
 #We will use curve_fit function later to estimate/fit the values of the above-mentioned coefficients 
 
 #Linear fitting model using the same style as the formula f(x)=ax+b
 def linear_model(x_val, A, B):
-    return A*(x_val-2010)+B
+    return A*(x_val-2010)+B #The offset of 2010 seemed to yield a relatively nice reduced chi-squared value after testing out a bunch of other ones.
 
 #Power fitting models:
 
 #Quadratic fitting model using the same style as f(x)=ax^2+bx+c
-# def quadratic_model(x_val, A, B, C):
-#     return A*(x_val-2005)**2+B*(x_val-2005)+C
+#Here we define C to be the initial value (mean of co2 level at 1959). Where at x=0. It is the year 1959, the very first data sample year we have available.
+#The year 1959 is chosen because it was the first year the data is available to us, 
+#but also most other ones would result in the runtime error that the curve_fit function was not able to find a nice fitting parameter for our model to come close to satisfying the given dataset.
 def quadratic_model(x_val, A, B):
-    return A*(x_val-1959)**2+B*(x_val-1959)+mean[0]
+    return A*(x_val-1959)**2+B*(x_val-1959)+mean[0] 
 
-
-#Note for both power_model and exponential_model we encountered the runtime error:
-#RuntimeError: Optimal parameters not found: Number of calls to function has reached maxfev = 800.
-#To fix this, we introduced the term -1959 to x_val to fit the model aka x_val[0]=1959-1959 = 0 for the computer to be able to handle the simulation.
-
+#Similarly we have applied the offset of 1959 to the power model as well, to avoid the same runtime error.
 #Power fitting model using the same style as f(x)=ax^b+c
-# def power_model(x_val, A, B, C):
-#     return A*(x_val-1959)**B+C
+#We have let the C component to be set as the initial co2 value in the year 1959.
 def power_model(x_val, A, B):
     return A*(x_val-1959)**B+mean[0]
     
-#Exponential fitting model using the same style as f(x)=ae^(bx)+c
-# def exponential_model(x_val, A, B, C):
-#     return A*np.exp(B*(x_val-2005))+C
+
+#############################################################################################################################################################################################################################################################
 
 
-#Using the curve_fit function for each of the above models
+#Using the curve_fit function with parameters specified from the pdf for each of the above models
 
-#Define new variables for the linear fitting model so that we can only account for the last 20 years of data.
+#Define new variables for the linear fitting model so that we can only account for the last 20 years of the given data.
 lin_year = year[-20:]
 lin_mean = mean[-20:]
 lin_unc = unc[-20:]
+
 #Linear model curve fitting using the new variables
 lin_popt, lin_pcov = curve_fit(linear_model, lin_year, lin_mean, sigma = lin_unc, absolute_sigma=True)
 
@@ -72,11 +74,11 @@ lin_popt, lin_pcov = curve_fit(linear_model, lin_year, lin_mean, sigma = lin_unc
 quad_popt, quad_pcov = curve_fit(quadratic_model, year, mean, sigma = unc, absolute_sigma=True)
 
 #Power model curve fitting
+#Initial guess is input by looking at the value of popt without specified initial value, and then putting a number approximately to that value, I just thought it would be fun.
 pow_popt, pow_pcov = curve_fit(power_model, year, mean, p0=(0.3, 1.4), sigma = unc, absolute_sigma=True)
 
-#Exponential model curve fitting
-#Here we are providing the initial value estimating value of A = 1, B = almost 0, C = 200 (this is still below the smallest co2 level in the given data set)
-# exp_popt, exp_pcov = curve_fit(exponential_model, year, mean, p0=(1, 1e-6, 200))
+
+##############################################################################################################################################################################################################################################################
 
 
 #Model values and their residuals
@@ -96,20 +98,19 @@ quad_residual = year*0
 pow_model_data = year*0
 pow_residual = year*0
 
-# exp_model_data = year*0
-# exp_residual = year*0
-
-#Calculating the expected values and finding their respective residuals
+#Calculating the expected values of both the quadratic and power models and finding their respective residuals
 for i in range (len(year)):
+    
     #First the expected values
-    # quad_model_data[i]=quadratic_model(year[i], quad_popt[0], quad_popt[1], quad_popt[2])
     quad_model_data[i]=quadratic_model(year[i], quad_popt[0], quad_popt[1])
     pow_model_data[i]=power_model(year[i], pow_popt[0], pow_popt[1])
-    # exp_model_data[i]=exponential_model(year[i], exp_popt[0], exp_popt[1], exp_popt[2])
+    
     #Then calculate the residuals
     quad_residual[i] = mean[i]-quad_model_data[i]
     pow_residual[i] = mean[i]-pow_model_data[i]
-    # exp_residual[i] = mean[i]-exp_model_data[i]
+
+
+##############################################################################################################################################################################################################################################################
 
 
 #Calculating the uncertainties in our models
@@ -146,6 +147,10 @@ for w in range(len(lin_unc_total)):
 
 
 
+
+##############################################################################################################################################################################################################################################################
+
+
 #Plotting the datas and models and the residues
 #Plotting the linear model, the respective original data set, and the residuals
 plt.figure(figsize = (8, 16))
@@ -172,13 +177,10 @@ plt.legend()
 plt.title("Residuals from the linear model")
 plt.show()
 
-linear_chi2=np.sum( (lin_mean - lin_model_data)**2 / lin_unc**2 )
-linear_reduced_chi2 = linear_chi2/(lin_mean.size - 2)
-
-print("Linear Chi squared ", linear_chi2)
-print("Linear Chi reduced squared ", linear_reduced_chi2)
 
 ###################################################################################################################################################
+
+
 #Plotting for the quadratic model
 plt.figure(figsize = (8, 16))
 
@@ -205,14 +207,10 @@ plt.legend()
 plt.title("Residuals from the quadratic model")
 plt.show()
 
-quad_chi2=np.sum( (mean - quad_model_data)**2 / unc**2 )
-quad_reduced_chi2 = quad_chi2/(mean.size - 2)
-
-print("Quadratic Chi squared ", quad_chi2)
-print("Quadratic Chi reduced squared ", quad_reduced_chi2)
-
 
 ###################################################################################################################################################
+
+
 #Plotting for the power model
 plt.figure(figsize = (8, 16))
 
@@ -238,19 +236,54 @@ plt.legend()
 plt.title("Residuals from the power model")
 plt.show()
 
+
+##############################################################################################################################################################################################################################################################
+
+
+#Calculation of chi-squared values and reduced chi-squared values of the models, and printing them out.
+
+linear_chi2=np.sum( (lin_mean - lin_model_data)**2 / lin_unc**2 )
+linear_reduced_chi2 = linear_chi2/(lin_mean.size - 2)
+
+print("Linear Chi squared ", linear_chi2)
+print("Linear Chi reduced squared ", linear_reduced_chi2)
+
+quad_chi2=np.sum( (mean - quad_model_data)**2 / unc**2 )
+quad_reduced_chi2 = quad_chi2/(mean.size - 2)
+
+print("Quadratic Chi squared ", quad_chi2)
+print("Quadratic Chi reduced squared ", quad_reduced_chi2)
+
 power_chi2=np.sum( (mean - pow_model_data)**2 / unc**2 )
 power_reduced_chi2 = power_chi2/(mean.size - 2)
 
 print("Power Chi squared ", power_chi2)
 print("Power Chi reduced squared ", power_reduced_chi2)
 
-
+############################ END OF THE LAB EXERCISE #####################################################################################################
 
 ####################################################################################################################################################
 
-##########################PLEASE IGNORE THE FOLLOWING###############################################################################################
+########################## PLEASE IGNORE THE FOLLOWING ###############################################################################################
 
 #Scratches and things might be usedful for later project(s)
+
+#Exponential fitting model using the same style as f(x)=ae^(bx)+c
+# def exponential_model(x_val, A, B, C):
+#     return A*np.exp(B*(x_val-2005))+C
+
+#Exponential model curve fitting
+#Here we are providing the initial value estimating value of A = 1, B = almost 0, C = 200 (this is still below the smallest co2 level in the given data set)
+# exp_popt, exp_pcov = curve_fit(exponential_model, year, mean, p0=(1, 1e-6, 200))
+
+# exp_model_data = year*0
+# exp_residual = year*0
+
+#for i in range (len(year)):
+    #First the expected values
+    # exp_model_data[i]=exponential_model(year[i], exp_popt[0], exp_popt[1], exp_popt[2])
+    #Then calculate the residuals
+    # exp_residual[i] = mean[i]-exp_model_data[i]
 
 # print ("A value:", popt2[0])
 # print ("B value:", popt2[1])
