@@ -72,6 +72,7 @@ exp_popt, exp_pcov = curve_fit(exponential_model, year, mean, p0=(1, 1e-6, 200))
 
 #Model values and their residuals
 #Data returned by the linear model
+#Initialized array also need to match the size of that of the year to avoid length mismatch
 lin_model_data = lin_year*0
 lin_residual = lin_year*0
 for l in range(len(lin_year)):
@@ -79,6 +80,7 @@ for l in range(len(lin_year)):
     lin_residual[l]=lin_mean[l]-lin_model_data[l]
 
 #Initializing the arrays of the expected values from the models after curve fit
+#Initialized arrays also need to match the size of that of the year to avoid length mismatch
 quad_model_data = year*0
 quad_residual = year*0
 
@@ -100,13 +102,47 @@ for i in range (len(year)):
     exp_residual[i] = mean[i]-exp_model_data[i]
 
 
+#Calculating the uncertainties in our models
+
+#Linear Model
+lin_pcov=np.diag(lin_pcov)
+lin_unc_total=lin_model_data*0 #initializing empty total uncertainty array matching the size of model data
+#Since f(x)=ax+b, where x is the year. At each iteration, we can treat the year with no uncertainty (because we are not saying i.e. 1960 +- 1 year for the corresponding c02 data)
+for w in range(len(lin_unc_total)):
+    #Apply point 2 in the uncertainty lecture slide to get the first part (ax)
+    #Since unc(year) is 0, then u(f)=f*sqrt(((u(a)/a)**2)+0)=f*u(a)/a
+    temp_unc_a=np.sqrt(lin_pcov[0])
+    temp_unc_1=lin_year[w]*lin_popt[0]*temp_unc_a/lin_popt[0]
+    #Apply point 1 in the lecture slide to calculate the model's uncertainty counting (+b)
+    #Since uncertainty of b is sqrt(lin_pcov[1,1]),if we square it for the uncertainty, we simply get lin_pcov[1,1]
+    
+    temp_unc_2=np.sqrt(temp_unc_1**2+lin_pcov[1]) #This is our model's uncertainty
+    
+    #Now calculate the unc of the residual by applying point 1 of the slide again
+    temp_unc_total_per_year = np.sqrt(lin_unc[w]**2+temp_unc_2**2)
+    
+    #Chi squared values
+    #temp_chi2 = np.sum( (lin_year[l] - linear_model(lin_year[l], lin_popt[0], lin_popt[1]))**2 / temp_unc_total_per_year**2 )
+    temp_chi2 = (lin_year[l] - linear_model(lin_year[w], lin_popt[0], lin_popt[1]))**2 / temp_unc_total_per_year**2
+    temp_red_chi2 = temp_chi2/(lin_year.size - 3)
+    lin_unc_total[w]=temp_red_chi2
+
+
+#Quadratic Model
+
+
+#Power Model
+
+
+#Exponential Model
+
+
 #Plotting the datas and models and the residues
 #Plotting the linear model, the respective original data set, and the residuals
 plt.figure(figsize = (8, 16))
 
 #First subplot corresponding to the original data set and the linear model's fitting.
 plt.subplot(2, 1, 1)
-#plt.plot(lin_year, lin_mean, label = "Data (last 20 years)")
 plt.plot(lin_year, linear_model(lin_year, lin_popt[0], lin_popt[1]), label = "Linear Model Curve Fit", color="blue")
 plt.errorbar(lin_year, lin_mean, yerr=lin_unc, fmt='o', capsize=0, ecolor = "black", label = "Data (last 20 years)", marker = ".", markersize = 10)
 plt.xlabel("Year")
@@ -119,22 +155,7 @@ plt.title("Mean CO$_2$ level with linear model curve fitting")
 lin_zero_err = np.zeros(len(lin_year))
 plt.subplot(2, 1, 2)
 plt.plot(lin_year, lin_zero_err)
-
-
-
-
-
-
-#missing residual error bars
-
-
-
-
-
-tempError = np.zeros(len(lin_year))
-plt.errorbar(lin_year, lin_residual, yerr=tempError, fmt='o', capsize=0, color = "red", label = "Data (last 20 years)", marker = ".", markersize = 10)
-#plt.plot(lin_year, lin_residual, label = "Residual of the linear model versus actual data", marker = ".", color = "red")
-
+plt.plot(lin_year, lin_residual,'o', label = "Residual of the linear model versus actual data", marker = ".", color = "red")
 plt.xlabel("Year")
 plt.ylabel(r'$Error\:of\:CO_2\:Level\:in\:the\:linear\:model\:(in\:unit\:of\:ppm)$')
 plt.xticks(np.arange(2004, 2023, step = 2))
