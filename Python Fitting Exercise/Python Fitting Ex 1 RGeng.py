@@ -9,6 +9,11 @@ Code created for PHY224 Fitting Exercise 1
 Due Sunday January 20th, 2025
 """
 
+#Note:
+#The structure of this code is ordered in a similar fassion as the bullet point listed in the IntroFitting.pdf file
+#With the exception that at the very end of this script, there is a distinguishable section of scratches for testing out ideas and possibly saving them for future uses. Please disregard the scratch section for this exercise.
+
+
 import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
@@ -61,13 +66,13 @@ lin_year = year[-20:]
 lin_mean = mean[-20:]
 lin_unc = unc[-20:]
 #Linear model curve fitting using the new variables
-lin_popt, lin_pcov = curve_fit(linear_model, lin_year, lin_mean)
+lin_popt, lin_pcov = curve_fit(linear_model, lin_year, lin_mean, sigma = lin_unc, absolute_sigma=True)
 
 #Quadratic model curve fitting
-quad_popt, quad_pcov = curve_fit(quadratic_model, year, mean)
+quad_popt, quad_pcov = curve_fit(quadratic_model, year, mean, sigma = unc, absolute_sigma=True)
 
 #Power model curve fitting
-pow_popt, pow_pcov = curve_fit(power_model, year, mean)
+pow_popt, pow_pcov = curve_fit(power_model, year, mean, sigma = unc, absolute_sigma=True)
 
 #Exponential model curve fitting
 #Here we are providing the initial value estimating value of A = 1, B = almost 0, C = 200 (this is still below the smallest co2 level in the given data set)
