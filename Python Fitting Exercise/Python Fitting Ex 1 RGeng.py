@@ -56,7 +56,8 @@ def quadratic_model(x_val, A, B):
 def power_model(x_val, A, B):
     return A*(x_val-1959)**B+mean[0]
     
-
+def temp_power_model(x_val, A, B, C, D, E):
+    return A*(x_val-1959)**B+C*(x_val-1959)**3+D*(x_val-1959)**2+E*(x_val-1959)+mean[0]
 #############################################################################################################################################################################################################################################################
 
 
@@ -77,6 +78,7 @@ quad_popt, quad_pcov = curve_fit(quadratic_model, year, mean, sigma = unc, absol
 #Initial guess is input by looking at the value of popt without specified initial value, and then putting a number approximately to that value, I just thought it would be fun.
 pow_popt, pow_pcov = curve_fit(power_model, year, mean, p0=(0.3, 1.4), sigma = unc, absolute_sigma=True)
 
+temp_pow_popt, temp_pow_pcov=curve_fit(temp_power_model, year, mean, p0=(0.3, 1.4, 0, 0, 0), sigma = unc, absolute_sigma=True)
 
 ##############################################################################################################################################################################################################################################################
 
@@ -98,16 +100,21 @@ quad_residual = year*0
 pow_model_data = year*0
 pow_residual = year*0
 
+temp_pow_model_data = year*0
+temp_pow_residual = year*0
+
 #Calculating the expected values of both the quadratic and power models and finding their respective residuals
 for i in range (len(year)):
     
     #First the expected values
     quad_model_data[i]=quadratic_model(year[i], quad_popt[0], quad_popt[1])
     pow_model_data[i]=power_model(year[i], pow_popt[0], pow_popt[1])
+    temp_pow_model_data[i]=temp_power_model(year[i], temp_pow_popt[0], temp_pow_popt[1], temp_pow_popt[2], temp_pow_popt[3], temp_pow_popt[4])
     
     #Then calculate the residuals
     quad_residual[i] = mean[i]-quad_model_data[i]
     pow_residual[i] = mean[i]-pow_model_data[i]
+    temp_pow_residual[i] = mean[i]-temp_pow_model_data[i]
 
 
 ##############################################################################################################################################################################################################################################################
@@ -260,6 +267,13 @@ power_reduced_chi2 = power_chi2/(mean.size - 2)
 print("Power Chi squared ", power_chi2)
 print("Power Chi reduced squared ", power_reduced_chi2)
 
+
+temp_power_chi2=np.sum( (mean - temp_pow_model_data)**2 / unc**2 )
+temp_power_reduced_chi2 = temp_power_chi2/(mean.size - 2)
+
+print("Temp Power Chi squared ", temp_power_chi2)
+print("Temp Power Chi reduced squared ", temp_power_reduced_chi2)
+
 ############################ END OF THE LAB EXERCISE #####################################################################################################
 
 ####################################################################################################################################################
@@ -269,21 +283,52 @@ print("Power Chi reduced squared ", power_reduced_chi2)
 #Scratches and things might be usedful for later project(s)
 
 #Exponential fitting model using the same style as f(x)=ae^(bx)+c
-# def exponential_model(x_val, A, B, C):
-#     return A*np.exp(B*(x_val-2005))+C
+def exponential_model(x_val, A, B, C):
+    return A*np.exp(B*(x_val-1959))+C
 
 #Exponential model curve fitting
 #Here we are providing the initial value estimating value of A = 1, B = almost 0, C = 200 (this is still below the smallest co2 level in the given data set)
-# exp_popt, exp_pcov = curve_fit(exponential_model, year, mean, p0=(1, 1e-6, 200))
+exp_popt, exp_pcov = curve_fit(exponential_model, year, mean,p0=(60, 1e-2, 250), sigma=unc, absolute_sigma=True)
 
-# exp_model_data = year*0
-# exp_residual = year*0
+exp_model_data = year*0
+exp_residual = year*0
 
-#for i in range (len(year)):
+for i in range (len(year)):
     #First the expected values
-    # exp_model_data[i]=exponential_model(year[i], exp_popt[0], exp_popt[1], exp_popt[2])
+    exp_model_data[i]=exponential_model(year[i], exp_popt[0], exp_popt[1], exp_popt[2])
     #Then calculate the residuals
-    # exp_residual[i] = mean[i]-exp_model_data[i]
+    exp_residual[i] = mean[i]-exp_model_data[i]
+    
+exp_chi2=np.sum( (mean - exp_model_data)**2 / unc**2 )
+power_reduced_chi2 = exp_chi2/(mean.size - 2)
+
+print("Exp Chi squared ", power_chi2)
+print("Exp Chi reduced squared ", power_reduced_chi2)
+
+#Plotting for the exp model
+plt.figure(figsize = (8, 16))
+
+#First subplot corresponding to the original data set and the linear model's fitting.
+plt.subplot(2, 1, 1)
+plt.plot(year, exponential_model(year, exp_popt[0], exp_popt[1], exp_popt[2]), label = "Exp Model Curve Fit", color="blue")
+plt.errorbar(year, mean, yerr=unc, fmt='o', capsize=0, ecolor = "black", label = "Data", marker = ".", markersize = 10)
+plt.xlabel("Year")
+plt.ylabel(r'$CO_2\:Level\:(in\:unit\:of\:ppm)$')
+plt.xticks(np.arange(1959, 2023, step = 5))
+plt.legend()
+plt.title("Mean CO$_2$ level with exp model curve fitting")
+
+#Second subplot for the residuals, with a newly defined variable lin_zero_err as the line where the residual is 0.
+zero_residual_line = np.zeros(len(year))
+plt.subplot(2, 1, 2)
+plt.plot(year, zero_residual_line)
+plt.plot(year, exp_residual,'o', label = "Residual of the exp model versus actual data", marker = ".", color = "red")
+plt.xlabel("Year")
+plt.ylabel(r'$Error\:of\:CO_2\:Level\:in\:the\:exp\:model\:(in\:unit\:of\:ppm)$')
+plt.xticks(np.arange(1959, 2023, step = 5))
+plt.legend()
+plt.title("Residuals from the exp model")
+plt.show()
 
 # print ("A value:", popt2[0])
 # print ("B value:", popt2[1])
