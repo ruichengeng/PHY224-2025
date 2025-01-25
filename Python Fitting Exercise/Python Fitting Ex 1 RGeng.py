@@ -56,8 +56,7 @@ def quadratic_model(x_val, A, B):
 def power_model(x_val, A, B):
     return A*(x_val-1959)**B+mean[0]
     
-def temp_power_model(x_val, A, B, C, D, E):
-    return A*(x_val-1959)**B+C*(x_val-1959)**3+D*(x_val-1959)**2+E*(x_val-1959)+mean[0]
+
 #############################################################################################################################################################################################################################################################
 
 
@@ -78,7 +77,6 @@ quad_popt, quad_pcov = curve_fit(quadratic_model, year, mean, sigma = unc, absol
 #Initial guess is input by looking at the value of popt without specified initial value, and then putting a number approximately to that value, I just thought it would be fun.
 pow_popt, pow_pcov = curve_fit(power_model, year, mean, p0=(0.3, 1.4), sigma = unc, absolute_sigma=True)
 
-temp_pow_popt, temp_pow_pcov=curve_fit(temp_power_model, year, mean, p0=(0.3, 1.4, 0, 0, 0), sigma = unc, absolute_sigma=True)
 
 ##############################################################################################################################################################################################################################################################
 
@@ -109,12 +107,10 @@ for i in range (len(year)):
     #First the expected values
     quad_model_data[i]=quadratic_model(year[i], quad_popt[0], quad_popt[1])
     pow_model_data[i]=power_model(year[i], pow_popt[0], pow_popt[1])
-    temp_pow_model_data[i]=temp_power_model(year[i], temp_pow_popt[0], temp_pow_popt[1], temp_pow_popt[2], temp_pow_popt[3], temp_pow_popt[4])
     
     #Then calculate the residuals
     quad_residual[i] = mean[i]-quad_model_data[i]
     pow_residual[i] = mean[i]-pow_model_data[i]
-    temp_pow_residual[i] = mean[i]-temp_pow_model_data[i]
 
 
 ##############################################################################################################################################################################################################################################################
@@ -268,12 +264,6 @@ print("Power Chi squared ", power_chi2)
 print("Power Chi reduced squared ", power_reduced_chi2)
 
 
-temp_power_chi2=np.sum( (mean - temp_pow_model_data)**2 / unc**2 )
-temp_power_reduced_chi2 = temp_power_chi2/(mean.size - 2)
-
-print("Temp Power Chi squared ", temp_power_chi2)
-print("Temp Power Chi reduced squared ", temp_power_reduced_chi2)
-
 ############################ END OF THE LAB EXERCISE #####################################################################################################
 
 ####################################################################################################################################################
@@ -329,6 +319,50 @@ plt.xticks(np.arange(1959, 2023, step = 5))
 plt.legend()
 plt.title("Residuals from the exp model")
 plt.show()
+
+#Temporary power model for the incorporation of both power, cubic and quadratic
+# def temp_power_model(x_val, A, B, C, D, E):
+#     return A*(x_val-1959)**B+C*(x_val-1959)**3+D*(x_val-1959)**2+E*(x_val-1959)+mean[0]
+
+# temp_pow_popt, temp_pow_pcov=curve_fit(temp_power_model, year, mean, p0=(1e-3, 1e-3, 1e-3, 1e-3, 1e-3), sigma = unc, absolute_sigma=True)
+
+# for i in range (len(year)):
+#     #First the expected values
+#     temp_pow_model_data[i]=temp_power_model(year[i], temp_pow_popt[0], temp_pow_popt[1], temp_pow_popt[2], temp_pow_popt[3], temp_pow_popt[4])
+    
+#     #Then calculate the residuals
+#     temp_pow_residual[i] = mean[i]-temp_pow_model_data[i]
+
+#Plotting for the temp_power model
+# plt.figure(figsize = (8, 16))
+
+#First subplot corresponding to the original data set and the linear model's fitting.
+# plt.subplot(2, 1, 1)
+# plt.plot(year, temp_power_model(year, temp_pow_popt[0], temp_pow_popt[1], temp_pow_popt[2], temp_pow_popt[3], temp_pow_popt[4]), label = "Temp Power Model Curve Fit", color="blue")
+# plt.errorbar(year, mean, yerr=unc, fmt='o', capsize=0, ecolor = "black", label = "Data", marker = ".", markersize = 10)
+# plt.xlabel("Year")
+# plt.ylabel(r'$CO_2\:Level\:(in\:unit\:of\:ppm)$')
+# plt.xticks(np.arange(1959, 2023, step = 5))
+# plt.legend()
+# plt.title("Mean CO$_2$ level with Temp Power model curve fitting")
+
+# #Second subplot for the residuals, with a newly defined variable lin_zero_err as the line where the residual is 0.
+# zero_residual_line = np.zeros(len(year))
+# plt.subplot(2, 1, 2)
+# plt.plot(year, zero_residual_line)
+# plt.plot(year, temp_pow_residual,'o', label = "Residual of the temp power model versus actual data", marker = ".", color = "red")
+# plt.xlabel("Year")
+# plt.ylabel(r'$Error\:of\:CO_2\:Level\:in\:the\:temp_power\:model\:(in\:unit\:of\:ppm)$')
+# plt.xticks(np.arange(1959, 2023, step = 5))
+# plt.legend()
+# plt.title("Residuals from the temp power model")
+# plt.show()
+
+# temp_power_chi2=np.sum( (mean - temp_pow_model_data)**2 / unc**2 )
+# temp_power_reduced_chi2 = temp_power_chi2/(mean.size - 2)
+
+# print("Temp Power Chi squared ", temp_power_chi2)
+# print("Temp Power Chi reduced squared ", temp_power_reduced_chi2)
 
 # print ("A value:", popt2[0])
 # print ("B value:", popt2[1])
