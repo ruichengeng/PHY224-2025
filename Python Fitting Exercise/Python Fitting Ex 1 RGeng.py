@@ -121,12 +121,13 @@ for i in range (len(year)):
 #Linear Model
 lin_pcov=np.diag(lin_pcov)
 lin_unc_total=lin_model_data*0 #initializing empty total uncertainty array matching the size of model data
+lin_unc_a=np.sqrt(lin_pcov[0])
+lin_unc_b=np.sqrt(lin_pcov[1])
 #Since f(x)=ax+b, where x is the year. At each iteration, we can treat the year with no uncertainty (because we are not saying i.e. 1960 +- 1 year for the corresponding c02 data)
 for w in range(len(lin_unc_total)):
     #Apply point 2 in the uncertainty lecture slide to get the first part (ax)
     #Since unc(year) is 0, then u(f)=f*sqrt(((u(a)/a)**2)+0)=f*u(a)/a
-    temp_unc_a=np.sqrt(lin_pcov[0])
-    temp_unc_1=lin_year[w]*lin_popt[0]*temp_unc_a/lin_popt[0]
+    temp_unc_1=lin_year[w]*lin_popt[0]*lin_unc_a/lin_popt[0]
     #Apply point 1 in the lecture slide to calculate the model's uncertainty counting (+b)
     #Since uncertainty of b is sqrt(lin_pcov[1,1]),if we square it for the uncertainty, we simply get lin_pcov[1,1]
     
