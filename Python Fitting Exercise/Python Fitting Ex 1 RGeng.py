@@ -118,6 +118,8 @@ for i in range (len(year)):
 
 #Calculating the uncertainties in our models
 
+#THE SPECIFICS AND DERIVATIONS ARE IN THE REPORT, PLEASE SEE THE PROCESS!
+
 #Linear Model
 lin_pcov=np.diag(lin_pcov)
 lin_unc_total=lin_model_data*0 #initializing empty total uncertainty array matching the size of model data
@@ -125,23 +127,19 @@ lin_unc_a=np.sqrt(lin_pcov[0])
 lin_unc_b=np.sqrt(lin_pcov[1])
 #Since f(x)=ax+b, where x is the year. At each iteration, we can treat the year with no uncertainty (because we are not saying i.e. 1960 +- 1 year for the corresponding c02 data)
 for w in range(len(lin_unc_total)):
-    #Apply point 2 in the uncertainty lecture slide to get the first part (ax)
+    #From the uncertainty lecture slide to get the first part (ax)
+    #See report step 1 of uncertainty calculation for the model.
     #Since unc(year) is 0, then u(f)=f*sqrt(((u(a)/a)**2)+0)=f*u(a)/a
-    temp_unc_1=lin_year[w]*lin_popt[0]*lin_unc_a/lin_popt[0]
-    #Apply point 1 in the lecture slide to calculate the model's uncertainty counting (+b)
-    #Since uncertainty of b is sqrt(lin_pcov[1,1]),if we square it for the uncertainty, we simply get lin_pcov[1,1]
+    temp_unc_1=(lin_year[w]-2010)*lin_unc_a/lin_popt[0]
     
+    #Apply lecture slide to calculate the model's uncertainty counting (+b)    
+    #See report step 2 for the uncertainty calculation
     # temp_unc_2=np.sqrt(temp_unc_1**2+lin_pcov[1]) #This is our model's uncertainty
-    temp_unc_2=np.sqrt(temp_unc_1**2+np.sqrt(lin_pcov[1]**2)) #This is our model's uncertainty
+    temp_unc_2=np.sqrt(temp_unc_1**2+np.sqrt(lin_unc_b**2)) #This is our model's uncertainty
     
-    #Now calculate the unc of the residual by applying point 1 of the slide again
-    temp_unc_total_per_year = np.sqrt(lin_unc[w]**2+temp_unc_2**2)
-    
-    #Chi squared values
-    #temp_chi2 = np.sum( (lin_year[l] - linear_model(lin_year[l], lin_popt[0], lin_popt[1]))**2 / temp_unc_total_per_year**2 )
-    temp_chi2 = (lin_year[l] - linear_model(lin_year[w], lin_popt[0], lin_popt[1]))**2 / temp_unc_total_per_year**2
-    temp_red_chi2 = temp_chi2/(lin_year.size - 3)
-    lin_unc_total[w]=temp_red_chi2
+    #Setting the total model's uncertainty array
+    lin_unc_total[w]=temp_unc_2
+
 
 
 #Quadratic Model
@@ -265,6 +263,22 @@ print("Power Chi squared ", power_chi2)
 print("Power Chi reduced squared ", power_reduced_chi2)
 
 
+##############################################################################################################################################################################################################################################################
+
+#Printing predictions
+
+print("Linear model prediction: ")
+print("1960: ", linear_model(1960, lin_popt[0], lin_popt[1]))
+print("2060: ", linear_model(2060, lin_popt[0], lin_popt[1]))
+
+print("Quadratic model prediction: ")
+print("1960: ", quadratic_model(1960, quad_popt[0], quad_popt[1]))
+print("2060: ", quadratic_model(2060, quad_popt[0], quad_popt[1]))
+
+print("Power model prediction: ")
+print("1960: ", power_model(1960, pow_popt[0], pow_popt[1]))
+print("2060: ", power_model(2060, pow_popt[0], pow_popt[1]))
+
 ############################ END OF THE LAB EXERCISE #####################################################################################################
 
 ####################################################################################################################################################
@@ -320,6 +334,17 @@ plt.xticks(np.arange(1959, 2023, step = 5))
 plt.legend()
 plt.title("Residuals from the exp model")
 plt.show()
+
+
+# #Now calculate the unc of the residual by applying point 1 of the slide again
+# temp_unc_total_per_year = np.sqrt(lin_unc[w]**2+temp_unc_2**2)
+    
+# #Chi squared values
+# #temp_chi2 = np.sum( (lin_year[l] - linear_model(lin_year[l], lin_popt[0], lin_popt[1]))**2 / temp_unc_total_per_year**2 )
+# temp_chi2 = (lin_year[l] - linear_model(lin_year[w], lin_popt[0], lin_popt[1]))**2 / temp_unc_total_per_year**2
+# temp_red_chi2 = temp_chi2/(lin_year.size - 3)
+# lin_unc_total[w]=temp_red_chi2
+
 
 #Temporary power model for the incorporation of both power, cubic and quadratic
 # def temp_power_model(x_val, A, B, C, D, E):
