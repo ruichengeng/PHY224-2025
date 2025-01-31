@@ -142,18 +142,20 @@ def linear_model_uncertainty(year):
     #From the uncertainty lecture slide to get the first part (ax)
     #See report step 1 of uncertainty calculation for the model.
     #Since unc(year) is 0, then u(f)=f*sqrt(((u(a)/a)**2)+0)=f*u(a)/a
-    lin_temp_unc=(year-2010)*lin_unc_a #See report for the this derivation
+    y=year-2010
+    lin_temp_unc=y*lin_unc_a #See report for the this derivation
     
     #Apply lecture slide to calculate the model's uncertainty counting (+b)    
     #See report step 2 for the uncertainty calculation
     # temp_unc_2=np.sqrt(temp_unc_1**2+lin_pcov[1]) #This is our model's uncertainty
-    return np.sqrt(lin_temp_unc**2+np.sqrt(lin_unc_b**2)) #This is our model's uncertainty
+    return np.sqrt(lin_temp_unc**2+lin_unc_b**2) #This is our model's uncertainty
 
 
 def quadratic_model_uncertainty(year):
     #See the report for derivations and specifics
+    x=year-1959
     quad_temp_unc_A=0
-    quad_temp_unc_B=((year-1959)**2)*quad_unc_a
+    quad_temp_unc_B=(x**2)*quad_unc_a
     quad_temp_unc_C=quad_unc_b
     quad_temp_unc_D=np.sqrt(quad_temp_unc_B**2+quad_temp_unc_C**2)
     quad_temp_unc_E=np.sqrt(quad_temp_unc_D**2+0.12**2)
@@ -161,7 +163,12 @@ def quadratic_model_uncertainty(year):
 
 
 def power_model_uncertainty(year):
-    return True
+    x=year-1959
+    temp_A=x**pow_popt[1]
+    pow_temp_unc_A=temp_A*np.log(x)*pow_unc_b
+    pow_temp_unc_B=pow_unc_a*temp_A*np.sqrt((pow_unc_a/pow_popt[0])**2 + (pow_temp_unc_A/temp_A)**2)
+    pow_temp_unc_C=np.sqrt(pow_temp_unc_B**2+0.12**2)
+    return pow_temp_unc_C
 
 #Actual Calculation
 
@@ -327,53 +334,67 @@ print("2060: ", power_model(2060, pow_popt[0], pow_popt[1]), " with unc.: ", pow
 
 #Scratches and things might be usedful for later project(s)
 
+
+
+
+#Exponential fun!
+
 #Exponential fitting model using the same style as f(x)=ae^(bx)+c
-def exponential_model(x_val, A, B, C):
-    return A*np.exp(B*(x_val-1959))+C
+# def exponential_model(x_val, A, B, C):
+#     return A*np.exp(B*(x_val-1959))+C
 
-#Exponential model curve fitting
-#Here we are providing the initial value estimating value of A = 1, B = almost 0, C = 200 (this is still below the smallest co2 level in the given data set)
-exp_popt, exp_pcov = curve_fit(exponential_model, year, mean,p0=(60, 1e-2, 250), sigma=unc, absolute_sigma=True)
+# #Exponential model curve fitting
+# #Here we are providing the initial value estimating value of A = 1, B = almost 0, C = 200 (this is still below the smallest co2 level in the given data set)
+# exp_popt, exp_pcov = curve_fit(exponential_model, year, mean,p0=(60, 1e-2, 250), sigma=unc, absolute_sigma=True)
 
-exp_model_data = year*0
-exp_residual = year*0
+# exp_model_data = year*0
+# exp_residual = year*0
 
-for i in range (len(year)):
-    #First the expected values
-    exp_model_data[i]=exponential_model(year[i], exp_popt[0], exp_popt[1], exp_popt[2])
-    #Then calculate the residuals
-    exp_residual[i] = mean[i]-exp_model_data[i]
+# for i in range (len(year)):
+#     #First the expected values
+#     exp_model_data[i]=exponential_model(year[i], exp_popt[0], exp_popt[1], exp_popt[2])
+#     #Then calculate the residuals
+#     exp_residual[i] = mean[i]-exp_model_data[i]
     
-exp_chi2=np.sum( (mean - exp_model_data)**2 / unc**2 )
-power_reduced_chi2 = exp_chi2/(mean.size - 2)
+# exp_chi2=np.sum( (mean - exp_model_data)**2 / unc**2 )
+# power_reduced_chi2 = exp_chi2/(mean.size - 2)
 
-print("Exp Chi squared ", power_chi2)
-print("Exp Chi reduced squared ", power_reduced_chi2)
+# print("Exp Chi squared ", power_chi2)
+# print("Exp Chi reduced squared ", power_reduced_chi2)
 
-#Plotting for the exp model
-plt.figure(figsize = (8, 16))
+# #Plotting for the exp model
+# plt.figure(figsize = (8, 16))
 
-#First subplot corresponding to the original data set and the linear model's fitting.
-plt.subplot(2, 1, 1)
-plt.plot(year, exponential_model(year, exp_popt[0], exp_popt[1], exp_popt[2]), label = "Exp Model Curve Fit", color="blue")
-plt.errorbar(year, mean, yerr=unc, fmt='o', capsize=0, ecolor = "black", label = "Data", marker = ".", markersize = 10)
-plt.xlabel("Year")
-plt.ylabel(r'$CO_2$ Level (in unit of ppm)')
-plt.xticks(np.arange(1959, 2023, step = 5))
-plt.legend()
-plt.title("Mean CO$_2$ level with exp model curve fitting")
+# #First subplot corresponding to the original data set and the linear model's fitting.
+# plt.subplot(2, 1, 1)
+# plt.plot(year, exponential_model(year, exp_popt[0], exp_popt[1], exp_popt[2]), label = "Exp Model Curve Fit", color="blue")
+# plt.errorbar(year, mean, yerr=unc, fmt='o', capsize=0, ecolor = "black", label = "Data", marker = ".", markersize = 10)
+# plt.xlabel("Year")
+# plt.ylabel(r'$CO_2$ Level (in unit of ppm)')
+# plt.xticks(np.arange(1959, 2023, step = 5))
+# plt.legend()
+# plt.title("Mean CO$_2$ level with exp model curve fitting")
 
-#Second subplot for the residuals, with a newly defined variable lin_zero_err as the line where the residual is 0.
-zero_residual_line = np.zeros(len(year))
-plt.subplot(2, 1, 2)
-plt.plot(year, zero_residual_line, label="Zero residual line")
-plt.errorbar(year, exp_residual, yerr=unc, fmt='o', capsize=0, ecolor = "red", label = "Residual of the exponential model versus actual data", marker = ".", markersize = 10)
-plt.xlabel("Year")
-plt.ylabel(r'Error\:of $CO_2$ Level in the exp model (in unit of ppm)')
-plt.xticks(np.arange(1959, 2023, step = 5))
-plt.legend()
-plt.title("Residuals from the exp model")
-plt.show()
+# #Second subplot for the residuals, with a newly defined variable lin_zero_err as the line where the residual is 0.
+# zero_residual_line = np.zeros(len(year))
+# plt.subplot(2, 1, 2)
+# plt.plot(year, zero_residual_line, label="Zero residual line")
+# plt.errorbar(year, exp_residual, yerr=unc, fmt='o', capsize=0, ecolor = "red", label = "Residual of the exponential model versus actual data", marker = ".", markersize = 10)
+# plt.xlabel("Year")
+# plt.ylabel(r'Error\:of $CO_2$ Level in the exp model (in unit of ppm)')
+# plt.xticks(np.arange(1959, 2023, step = 5))
+# plt.legend()
+# plt.title("Residuals from the exp model")
+# plt.show()
+
+# print("Exponential model prediction: ")
+# print("1960: ", exponential_model(1960, exp_popt[0], exp_popt[1], exp_popt[2]))
+# print("2060: ", exponential_model(2060, exp_popt[0], exp_popt[1], exp_popt[2]))
+
+
+
+
+
 
 
 # #Now calculate the unc of the residual by applying point 1 of the slide again
