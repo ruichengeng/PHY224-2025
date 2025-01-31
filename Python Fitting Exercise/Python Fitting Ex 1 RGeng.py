@@ -8,7 +8,7 @@ Student number: 1003048454
 Code created for PHY224 Fitting Exercise 1
 Prof. Sergio De La Barrera
 Ta: Weigeng Peng
-Due Sunday January 20th, 2025
+Due January 26th, 2025
 """
 
 #Note:
