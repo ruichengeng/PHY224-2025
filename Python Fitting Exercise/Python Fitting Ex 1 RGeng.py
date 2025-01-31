@@ -118,35 +118,75 @@ for i in range (len(year)):
 
 #Calculating the uncertainties in our models
 
-#THE SPECIFICS AND DERIVATIONS ARE IN THE REPORT, PLEASE SEE THE PROCESS!
+#We have derived the expressions for the uncertainty and simplified the process before implementing the code to reduce computer usage.
 
-#Linear Model
+#See the report for the derivations and specifics!
+
+#Directly diagonalizing the covariance.
 lin_pcov=np.diag(lin_pcov)
-lin_unc_total=lin_model_data*0 #initializing empty total uncertainty array matching the size of model data
+quad_pcov=np.diag(quad_pcov)
+pow_pcov=np.diag(pow_pcov)
+
+#Uncertainties of the individual fitted parameters
 lin_unc_a=np.sqrt(lin_pcov[0])
 lin_unc_b=np.sqrt(lin_pcov[1])
-#Since f(x)=ax+b, where x is the year. At each iteration, we can treat the year with no uncertainty (because we are not saying i.e. 1960 +- 1 year for the corresponding c02 data)
-for w in range(len(lin_unc_total)):
+quad_unc_a=np.sqrt(quad_pcov[0])
+quad_unc_b=np.sqrt(quad_pcov[1])
+pow_unc_a=np.sqrt(pow_pcov[0])
+pow_unc_b=np.sqrt(pow_pcov[1])
+
+#Helper functions
+def linear_model_uncertainty(year):
+    #Since f(x)=ax+b, where x is the year. At each iteration, we can treat the year with no uncertainty (because we are not saying i.e. 1960 +- 1 year for the corresponding c02 data)
+
     #From the uncertainty lecture slide to get the first part (ax)
     #See report step 1 of uncertainty calculation for the model.
     #Since unc(year) is 0, then u(f)=f*sqrt(((u(a)/a)**2)+0)=f*u(a)/a
-    temp_unc_1=(lin_year[w]-2010)*lin_unc_a/lin_popt[0]
+    lin_temp_unc=(year-2010)*lin_unc_a #See report for the this derivation
     
     #Apply lecture slide to calculate the model's uncertainty counting (+b)    
     #See report step 2 for the uncertainty calculation
     # temp_unc_2=np.sqrt(temp_unc_1**2+lin_pcov[1]) #This is our model's uncertainty
-    temp_unc_2=np.sqrt(temp_unc_1**2+np.sqrt(lin_unc_b**2)) #This is our model's uncertainty
-    
+    return np.sqrt(lin_temp_unc**2+np.sqrt(lin_unc_b**2)) #This is our model's uncertainty
+
+
+def quadratic_model_uncertainty(year):
+    #See the report for derivations and specifics
+    quad_temp_unc_A=0
+    quad_temp_unc_B=((year-1959)**2)*quad_unc_a
+    quad_temp_unc_C=quad_unc_b
+    quad_temp_unc_D=np.sqrt(quad_temp_unc_B**2+quad_temp_unc_C**2)
+    quad_temp_unc_E=np.sqrt(quad_temp_unc_D**2+0.12**2)
+    return quad_temp_unc_E
+
+
+def power_model_uncertainty(year):
+    return True
+
+#Actual Calculation
+
+#Linear Model
+lin_unc_total=lin_model_data*0 #initializing empty total uncertainty array matching the size of model data
+
+for w in range(len(lin_year)):
     #Setting the total model's uncertainty array
-    lin_unc_total[w]=temp_unc_2
+    lin_unc_total[w]=linear_model_uncertainty(lin_year[w])
 
 
 
 #Quadratic Model
+quad_unc_total=quad_model_data*0 #initializing empty total uncertainty array matching the size of model data
 
+for w in range(len(year)): 
+    #Setting the total model's uncertainty array
+    quad_unc_total[w]=quadratic_model_uncertainty(year[w])
 
 #Power Model
+pow_unc_total=pow_model_data*0 #initializing empty total uncertainty array matching the size of model data
 
+for w in range(len(year)): 
+    #Setting the total model's uncertainty array
+    pow_unc_total[w]=power_model_uncertainty(year[w])
 
 
 
@@ -268,16 +308,16 @@ print("Power Chi reduced squared ", power_reduced_chi2)
 #Printing predictions
 
 print("Linear model prediction: ")
-print("1960: ", linear_model(1960, lin_popt[0], lin_popt[1]))
-print("2060: ", linear_model(2060, lin_popt[0], lin_popt[1]))
+print("1960: ", linear_model(1960, lin_popt[0], lin_popt[1]), " with unc.: ", linear_model_uncertainty(1960))
+print("2060: ", linear_model(2060, lin_popt[0], lin_popt[1]), " with unc.: ", linear_model_uncertainty(2060))
 
 print("Quadratic model prediction: ")
-print("1960: ", quadratic_model(1960, quad_popt[0], quad_popt[1]))
-print("2060: ", quadratic_model(2060, quad_popt[0], quad_popt[1]))
+print("1960: ", quadratic_model(1960, quad_popt[0], quad_popt[1]), " with unc.: ", quadratic_model_uncertainty(1960))
+print("2060: ", quadratic_model(2060, quad_popt[0], quad_popt[1]), " with unc.: ", quadratic_model_uncertainty(2060))
 
 print("Power model prediction: ")
-print("1960: ", power_model(1960, pow_popt[0], pow_popt[1]))
-print("2060: ", power_model(2060, pow_popt[0], pow_popt[1]))
+print("1960: ", power_model(1960, pow_popt[0], pow_popt[1]), " with unc.: ", power_model_uncertainty(1960))
+print("2060: ", power_model(2060, pow_popt[0], pow_popt[1]), " with unc.: ", power_model_uncertainty(2060))
 
 ############################ END OF THE LAB EXERCISE #####################################################################################################
 
