@@ -21,43 +21,83 @@ import numpy as np #Useful helper functions that can convert our data into forma
 from scipy.optimize import curve_fit #The main component of this fitting exercise
 import matplotlib.pyplot as plt #Handles the plotting aspect of this lab
 
-#Imports and reads the data from file named co2_annmean_mlo for the annual average of daily measurement of atmospheric co2 from 1960 to 2023 from the top of Mauna Loa in Hawaii.
-#Below: We skips 44 rows so that the first data entry is from 1959 aka the first row containing data
-#We also separated the data category based on separation character ',' 
-#Then we unpacked these into different arrays of data according to the type (i.e. years separated from co2 level separated from the uncertainty)
-#year is an array with each element as the year in unit of year
-#mean is an array with each element as the mean of the co2 level in a given year in unit of ppm
-#unc is an array with each element as the uncertainty of the mean co2 level in a given year, also in unit of ppm
+#Imports and reads the data from file named co2_mm_mlo.csv for the annual average of daily measurement of atmospheric co2 from 1960 to 2023 from the top of Mauna Loa in Hawaii.
+#Same as we did for EX1, but now the data has many more entries and will have more column variables.
 year, month, dec_date, mean, deseason, ndays, std, unc = np.loadtxt("co2_mm_mlo.csv", delimiter = ',', skiprows=41, unpack=True)
-
-
-
-def p_model_1(x_val, A, B, C, D):
-    return A+B*x_val+C*np.sin(2*np.pi*x_val-D)
-
-def p_model_2(x_val, A, B, C, D, E, F):
-    return A+B*x_val+C*np.sin(2*np.pi*x_val-D) + E*x_val**2
-
 
 
 #Fixes the 0s in the uncertainties
 for u in range(len(unc)):
     if unc[u]==0:
-        unc[u]=1e-10
-        
+        unc[u]=.5
+    elif unc[u]<0:
+        unc[u]=.5
 
 
+####################################################################################
+#Defining the periodic model to be used for our curve fitting exercise
+
+#Quadratic from EX1, since it fitted pretty nicely
+def quadratic_model(x_val, A, B):
+    return A*(x_val-1959)**2+B*(x_val-1959)+mean[0] 
+
+#Same format as the lecture slide's but we are also implementing the quadratic model into it.
+#Periodic component is of the format Ct*sin(2pi*D*t + E)
+def periodic_model(x_val, A, B, C, D, E):
+    return A*(x_val-1959)**2+B*(x_val-1959)+mean[0] + (C*x_val)*np.sin(2*D*np.pi*x_val-E)
 
 
-p0l = [2, 2, 0, 0.001, 0.5, 300]
-popt, pcov = curve_fit(p_model_2, dec_date, mean, p0=p0l, sigma=unc, absolute_sigma=True)
+#Curve fitting for the models' parameters
+#quad_popt, quad_pcov = curve_fit(quadratic_model, dec_date, mean, p0=(0.01348, 0.77451), sigma = unc, absolute_sigma=True)
+quad_popt, quad_pcov = curve_fit(quadratic_model, dec_date, mean, sigma = unc, absolute_sigma=True)
 
+period_popt, period_pcov = curve_fit(periodic_model, dec_date, mean, p0=(quad_popt[0], quad_popt[1], 1, 1, 1), sigma = unc, absolute_sigma=True)
+
+
+###############################################################################################
+#Residual Calculation
+
+periodic_model_data = dec_date*0
+periodic_residual = dec_date*0
+
+for p in range(len(dec_date)):
+    periodic_model_data[p] = periodic_model(dec_date[p], period_popt[0], period_popt[1], period_popt[2], period_popt[3], period_popt[4])
+    periodic_residual[p] = mean[p] - periodic_model_data[p]
+
+#################################################################################################
+per_chi2=np.sum( (mean - periodic_model_data)**2 / unc**2 )
+per_reduced_chi2 = per_chi2/(mean.size - 2)
+
+print("Periodic Chi squared ", per_chi2)
+print("Periodic Chi reduced squared ", per_reduced_chi2)        
+
+
+#################################################################################################
+#Plotting the dataset and the fitted model
 
 plt.figure(figsize = (8, 16))
-#plt.xticks(np.arange(1957, 2023, step = 1))
-plt.plot(year, mean)
-#plt.plot(dec_date, p_model_1(dec_date, popt[0], popt[1], popt[2], popt[3]))
-plt.plot(dec_date, p_model_2(dec_date, popt[0], popt[1], popt[2], popt[3], popt[4], popt[5]))
+
+#First subplot corresponding to the original data set and the periodic model's fitting.
+plt.subplot(2, 1, 1)
+plt.errorbar(dec_date, mean, yerr=unc, fmt='o', capsize=0, ecolor = "red", label = "Data", marker = ".", markersize = 1)
+plt.plot(dec_date, periodic_model(dec_date, period_popt[0], period_popt[1], period_popt[2], period_popt[3], period_popt[4]), label = "Periodic Model Curve Fit", color="blue")
+plt.xlabel("Year")
+plt.ylabel(r'$CO_2$ Level (in unit of ppm)')
+plt.xticks(np.arange(1958, 2024, step = 5))
+plt.legend()
+plt.title("Mean CO$_2$ level with periodic model curve fitting")
+
+#Second subplot for the residuals, with a newly defined variable lin_zero_err as the line where the residual is 0.
+zero_residual_line = np.zeros(len(dec_date))
+plt.subplot(2, 1, 2)
+plt.plot(dec_date, zero_residual_line, label="Zero residual line")
+plt.errorbar(dec_date, periodic_residual, yerr=unc, fmt='o', capsize=0, ecolor = "red", label = "Residual of the periodic model versus actual data", marker = ".", markersize = 10)
+plt.xlabel("Year")
+plt.ylabel(r'Error of $CO_2$ Level in the periodic model (in unit of ppm)')
+plt.xticks(np.arange(1959, 2023, step = 5))
+plt.legend()
+plt.title("Residuals from the periodic model")
+plt.show()
 
 
 
