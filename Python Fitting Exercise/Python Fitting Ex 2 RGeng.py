@@ -147,24 +147,55 @@ for a in co2_by_month:
     co2_by_month_mean[a]=co2_by_month[a][1]/co2_by_month[a][0]
 
 
+print("Month with the highest CO2 level value is: ", np.max(co2_by_month_mean))
 
 
+#Time of CO2 passing twice 285ppm
+
+co2_to_pass = 2*285
+
+temp_year = 1960.
+
+while (periodic_model(temp_year, period_popt[0], period_popt[1], period_popt[2], period_popt[3], period_popt[4], period_popt[5])<co2_to_pass):
+    temp_year+=0.05
+
+print("We predict that the CO2 level can reach and then pass 570ppm by: ", temp_year)
 
 
+#How long until CO2 minimum of a year pass the CO2 maximum of 2000
+
+co2_max_2000 = np.array([0,0]) #1st number correspond to the position of the time, and 2nd number correspond to the value of co2 level
+
+for y in range(len(year)):
+    if year[y]>=2000 and year[y]<2001: #Checks between 2000.0 (inclusive) and 2001.0 (exclusive)
+        if mean[y]>co2_max_2000[1]:
+            co2_max_2000[1]=mean[y]
+            co2_max_2000[0] = year[y]
 
 
+#To check when is the minimum of a year is going to surpass the maximum of 2000. We will see when it is the last time we don't surpass the maximum.
+
+unsurpassed_year = 0
+
+for i in range (len(year)):
+    if mean[i] < co2_max_2000[1]:
+        unsurpassed_year = year[i]
 
 
+#Now that we have the last unsurpassed year, we will floor this value and add 1 to indicate the very first year where the minimum is less than the maximum of 2000.
 
+surpassed_year=np.floor(unsurpassed_year)+1
 
+#Finding the minimum of that year
+co2_min_surpassed = np.array([0,1000])
+for m in range(len(year)):
+    if year[y]>=surpassed_year and year[y]<surpassed_year+1: #Checks between initial of the surpassed year (inclusive) and the initial of the following year (exclusive)
+        if mean[y]<co2_min_surpassed[1]:
+            co2_min_surpassed[1]=mean[y]
+            co2_min_surpassed[0] = year[y]
 
-
-
-
-
-
-
-
-
+print("Maximunm CO2 level in 2000 is: ", co2_max_2000[1], ", occuring at the decimal date: ", co2_max_2000[0])
+print("The year that the minimum will pass the maximum of year 2000 is: ", surpassed_year)
+print("This year will have the minimum CO2 level of: ", co2_min_surpassed[1], ", occuring at the decimal date: ", co2_min_surpassed[0])
 
 
