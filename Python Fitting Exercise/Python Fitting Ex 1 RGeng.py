@@ -135,6 +135,12 @@ quad_unc_b=np.sqrt(quad_pcov[1])
 pow_unc_a=np.sqrt(pow_pcov[0])
 pow_unc_b=np.sqrt(pow_pcov[1])
 
+#Printing these out for documentation purposes    
+print("Linear Model Parameter Uncertainties: u(A)=", lin_unc_a, " u(B)=", lin_unc_b)
+print("Quadratic Model Parameter Uncertainties: u(A)=", quad_unc_a, " u(B)=", quad_unc_b)
+print("Power Model Parameter Uncertainties: u(A)=", pow_unc_a, " u(B)=", pow_unc_b)
+
+
 #Helper functions
 def linear_model_uncertainty(year):
     #Since f(x)=ax+b, where x is the year. At each iteration, we can treat the year with no uncertainty (because we are not saying i.e. 1960 +- 1 year for the corresponding c02 data)
