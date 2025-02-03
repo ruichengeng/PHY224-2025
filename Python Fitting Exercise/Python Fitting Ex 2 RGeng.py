@@ -130,8 +130,21 @@ plt.show()
 #################################################################################################
 #Report questions
 
+#Month with the higest CO2 value
+#Key is the month, then of the 2 numbers in the value: 1 correspond to the number of data entry and the other correspond to the total value
+co2_by_month = {1:[0,0], 2:[0,0], 3:[0,0], 4:[0,0], 5:[0,0], 6:[0,0], 7:[0,0], 8:[0,0], 9:[0,0], 10:[0,0], 11:[0,0], 12:[0,0]} 
 
+#Separate the values of the dataset based on the month they correspond to
+for m in range(len(month)):
+    co2_by_month[month[m]][0]+=1
+    co2_by_month[month[m]][1]+=mean[m]
+        
+#Using the data obtained above, we will find the mean of the co2 levels based on the month and the number of datasets
+co2_by_month_mean = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0}
 
+#Getting the new mean value per month
+for a in co2_by_month:
+    co2_by_month_mean[a]=co2_by_month[a][1]/co2_by_month[a][0]
 
 
 
