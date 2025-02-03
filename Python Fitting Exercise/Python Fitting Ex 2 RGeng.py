@@ -36,6 +36,7 @@ unc = np.array([])
 
 
 #Removes the data entries where the uncertainty is exactly 0 or negative.
+#Done by getting a new array that contains only those data entries with the positive uncertainties.
 for u in range(len(original_unc)):
     if original_unc[u]>0.0:
         year= np.append(year, original_year[u])
@@ -91,6 +92,10 @@ print("Periodic Chi reduced squared ", per_reduced_chi2)
 period_pcov = np.diag(period_pcov)
 period_parameter_unc = np.sqrt(period_pcov)
 
+#Printing out the uncertainties
+print("Uncertainty of the parameters are: u(A)=", period_parameter_unc[0], " u(B)=", period_parameter_unc[1], " u(C)=", period_parameter_unc[2],
+      " u(D)=", period_parameter_unc[3], " u(E)=", period_parameter_unc[4], " u(phi)=", period_parameter_unc[5])
+
 def period_model_unc(year):
     x=year-1960
     return np.sqrt((period_parameter_unc[0]*(x**4))**2+(x*period_parameter_unc[1])**2 + period_parameter_unc[2]**2
@@ -110,7 +115,7 @@ plt.errorbar(dec_date, mean, yerr=unc, fmt='o', capsize=0, ecolor = "red", label
 plt.plot(dec_date, periodic_model(dec_date, period_popt[0], period_popt[1], period_popt[2], period_popt[3], period_popt[4], period_popt[5]), label = "Periodic Model Curve Fit", color="blue", linewidth =0.75)
 plt.xlabel("Year")
 plt.ylabel(r'$CO_2$ Level (in unit of ppm)')
-plt.xticks(np.arange(1973, 2024, step = 5))
+plt.xticks(np.arange(1974, 2025, step = 5))
 plt.legend()
 plt.title("Mean CO$_2$ level with periodic model curve fitting")
 
@@ -121,42 +126,49 @@ plt.plot(dec_date, zero_residual_line, label="Zero residual line")
 plt.errorbar(dec_date, periodic_residual, yerr=unc, fmt='o', capsize=0, ecolor = "red", label = "Residual of the periodic model versus actual data", marker = ".", markersize = 10)
 plt.xlabel("Year")
 plt.ylabel(r'Error of $CO_2$ Level in the periodic model (in unit of ppm)')
-plt.xticks(np.arange(1973, 2024, step = 5))
+plt.xticks(np.arange(1974, 2025, step = 5))
 plt.legend()
 plt.title("Residuals from the periodic model")
 plt.show()
 
 
 #################################################################################################
+#Prediction into 50 years in the future
+
+prediction_year = np.arange(year[0], year[-1]+50.0, 0.2)
+
+plt.errorbar(dec_date, mean, yerr=unc, fmt='o', capsize=0, ecolor = "red", label = "Data", marker = ".", color = "red", markersize = 2)
+plt.plot(prediction_year, periodic_model(prediction_year, period_popt[0], period_popt[1], period_popt[2], period_popt[3], period_popt[4], period_popt[5]), label = "Periodic Model Prediction", color="blue", linewidth =0.75)
+plt.xlabel("Year")
+plt.ylabel(r'$CO_2$ Level (in unit of ppm)')
+plt.xticks(np.arange(1974, 2075, step = 10))
+plt.legend()
+plt.title("Periodic Model's Prediction of Future Mean CO$_2$ level (50 years from 2024)")
+
+#################################################################################################
 #Report questions
 
 ########################Month with the higest CO2 value##########################################
-#Key is the month, then of the 2 numbers in the value: 1 correspond to the number of data entry and the other correspond to the total value
-co2_by_month = {1:[0,0], 2:[0,0], 3:[0,0], 4:[0,0], 5:[0,0], 6:[0,0], 7:[0,0], 8:[0,0], 9:[0,0], 10:[0,0], 11:[0,0], 12:[0,0]} 
-
-#Separate the values of the dataset based on the month they correspond to
-for m in range(len(month)):
-    co2_by_month[month[m]][0]+=1
-    co2_by_month[month[m]][1]+=mean[m]
         
-#Using the data obtained above, we will find the mean of the co2 levels based on the month and the number of datasets
-co2_by_month_mean = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0}
+#Method 2: counting how many months in each year is the max
+month_max_count = np.zeros(12)
+current_year = 1974.0
+current_co2 = 0.0
+current_month = 0
 
-#Getting the new mean value per month
-for a in co2_by_month:
-    co2_by_month_mean[a]=co2_by_month[a][1]/co2_by_month[a][0]
+for d in range(len(month)):
+    if dec_date[d]>=current_year and dec_date[d]<current_year+1.0: #Checks between initial of the surpassed year (inclusive) and the initial of the following year (exclusive)
+        if mean[d]>current_co2:
+            current_co2=mean[d]
+            current_month = int(month[d])
+    else: 
+        month_max_count[current_month-1]+=1
+        current_month=0
+        current_co2=0.0
+        current_year = np.floor(current_year)+1.0
 
 
-#Simple forloop sorting
-highest_month = 0
-highest_month_mean = 0
-for h in co2_by_month_mean:
-    if co2_by_month_mean[h] >= highest_month_mean:
-        highest_month=h
-        highest_month_mean = co2_by_month_mean[h]
-
-
-print("Month with the highest CO2 level value is: ", highest_month, " with a mean CO2 level (ppm) of: ", highest_month_mean)
+print("Month with the highest CO2 level value is: ", np.where(month_max_count==np.max(month_max_count))[0]+1)
 
 
 #################Time of CO2 passing twice 285ppm#############################################
@@ -203,7 +215,47 @@ for d in range(len(dec_date)):
             co2_min_surpassed[0] = dec_date[d]
 
 print("Maximunm CO2 level (ppm) in 2000 is: ", co2_max_2000[1], ", occuring at the decimal date: ", co2_max_2000[0])
-print("The year that the minimum will pass the maximum of year 2000 is: ", surpassed_year)
+print("The year that the minimum will pass the maximum of year 2000 is: ", int(surpassed_year))
 print("This year will have the minimum CO2 level (ppm) of: ", co2_min_surpassed[1], ", occuring at the decimal date: ", co2_min_surpassed[0])
+print("The amount of time it took to surpass is: ", co2_min_surpassed[0]-co2_max_2000[0])
 
 
+
+
+
+
+
+
+
+
+###################################################################################################################################################################
+
+######################################### SCRATCHES PLEASE DO NOT GRADE#########################################################################
+
+
+
+
+#Trying to sort using a dictionary, does not account for the lack of data points for incomplete years
+#Key is the month, then of the 2 numbers in the value: 1 correspond to the number of data entry and the other correspond to the total value
+# co2_by_month = {1:[0,0], 2:[0,0], 3:[0,0], 4:[0,0], 5:[0,0], 6:[0,0], 7:[0,0], 8:[0,0], 9:[0,0], 10:[0,0], 11:[0,0], 12:[0,0]} 
+
+# #Separate the values of the dataset based on the month they correspond to
+# for m in range(len(month)):
+#     co2_by_month[month[m]][0]+=1
+#     co2_by_month[month[m]][1]+=mean[m]
+        
+# #Using the data obtained above, we will find the mean of the co2 levels based on the month and the number of datasets
+# co2_by_month_mean = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0}
+
+# #Getting the new mean value per month
+# for a in co2_by_month:
+#     co2_by_month_mean[a]=co2_by_month[a][1]/co2_by_month[a][0]
+
+
+# #Simple forloop sorting
+# highest_month = 0
+# highest_month_mean = 0
+# for h in co2_by_month_mean:
+#     if co2_by_month_mean[h] >= highest_month_mean:
+#         highest_month=h
+#         highest_month_mean = co2_by_month_mean[h]
