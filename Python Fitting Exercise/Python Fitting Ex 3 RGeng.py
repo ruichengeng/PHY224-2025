@@ -64,7 +64,7 @@ for i in range(len(year)):
 
 
 #Plotting the histogram
-bins_count = 10 #Setting the number of bins for the histogram
+bins_count = 40 #Setting the number of bins for the histogram
 plt.figure(figsize = (8, 16))
 
 #First subplot corresponding to the temperature
@@ -75,11 +75,34 @@ plt.hist(post_industrial_temp_mean, bins = bins_count, label = "Post-Industrial 
 plt.xlabel("Temperature Differences (°C)")
 plt.ylabel("Density")
 plt.legend()
-plt.title("Temperature Distribution")
-
-
-
+plt.title("Temperature Distribution Before and During the Industrial Revolution")
 
 plt.show()
+
+
+#Calculating the means of the datapoints corresponding to the temperature and co2 levels of different time periods
+
+mean_pre_ind_temp = np.mean(pre_industrial_temp_mean)
+std_pre_ind_temp = np.std(pre_industrial_temp_mean)
+mean_pre_ind_co2 = np.mean(pre_industrial_co2_mean)
+std_pre_ind_co2 = np.std(pre_industrial_co2_mean)
+
+mean_post_ind_temp = np.mean(post_industrial_temp_mean)
+std_post_ind_temp = np.std(post_industrial_temp_mean)
+mean_post_ind_co2 = np.mean(post_industrial_co2_mean)
+std_post_ind_co2 = np.std(post_industrial_co2_mean)
+
+print(f'Before Industrial Revolution: Temp Mean Diff = {mean_pre_ind_temp}°C, Temp Diff Std = {std_pre_ind_temp}°C, CO2 Mean = {mean_pre_ind_co2} ppm, CO2 Std = {std_pre_ind_co2} ppm')
+print(f'During Industrial Revolution: Temp Mean Diff = {mean_post_ind_temp}°C, Temp Diff Std = {std_post_ind_temp}°C, CO2 Mean = {mean_post_ind_co2} ppm, CO2 Std = {std_post_ind_co2} ppm')
+
+# Check for overlap: compare the distance between the mean values relative to the spread
+overlap_temp_check = (mean_post_ind_temp - mean_pre_ind_temp) < (std_pre_ind_temp + std_post_ind_temp)
+overlap_co2_check = (mean_post_ind_co2 - mean_pre_ind_co2) < (std_pre_ind_co2 + std_post_ind_co2)
+
+print(f'Do the temperature periods overlap: {overlap_temp_check}')
+print(f'Do the CO2 periods overlap: {overlap_co2_check}')
+
+
+
 
 # plt.errorbar(year, temp_mean, yerr=temp_std, fmt='o', capsize=0, ecolor = "red", label = "Data", marker = ".", color = "red", markersize = 2)
