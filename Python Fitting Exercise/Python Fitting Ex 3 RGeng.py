@@ -30,8 +30,6 @@ year, temp_mean, temp_std, co2_mean, co2_std = np.loadtxt("co2_temp_1000.csv", d
 def log_model(co2, A, B):
     return A*np.log(co2)+B
 
-popt, pcov = curve_fit(log_model, co2_mean, temp_mean, sigma = temp_std, absolute_sigma = True)
-
 #Separation of the dataset based on the industrial periods
 industrial_year=1769
 
@@ -77,6 +75,15 @@ plt.ylabel("Density")
 plt.legend()
 plt.title("Temperature Distribution Before and During the Industrial Revolution")
 
+plt.subplot(2, 1, 2)
+
+plt.hist(pre_industrial_co2_mean, bins = bins_count, label = "Pre-Industrial (<" +str(industrial_year)+")", density = True, alpha = 0.5)
+plt.hist(post_industrial_co2_mean, bins = bins_count, label = "Post-Industrial (>=" +str(industrial_year)+")", density = True, alpha = 0.5)
+plt.xlabel("CO2 levels (in unit of ppm)")
+plt.ylabel("Density")
+plt.legend()
+plt.title("CO2 Level Before and During the Industrial Revolution")
+
 plt.show()
 
 
@@ -103,6 +110,138 @@ print(f'Do the temperature periods overlap: {overlap_temp_check}')
 print(f'Do the CO2 periods overlap: {overlap_co2_check}')
 
 
+#Plotting the level of CO2 just to see where we get see "spiking up"
+plt.errorbar(year, co2_mean, yerr=co2_std , fmt='o', capsize=0, ecolor = "red", label = "Measured level of CO2", marker = ".", markersize = 1)
+plt.xlabel("Year")
+plt.ylabel(r'$CO_2$ Level (in unit of ppm)')
+plt.legend()
+plt.title(r'$CO_2$ level measured over the years')
+plt.xticks(np.arange(1000, 2025, step = 100))
+
+####################################################################################################################################################################
+#We could see from above that approx 1900 the CO2 level spiked upwards, we can see that this might be our "fully industrialized" period
+#Now repeat everything we had above.
+
+#Separation of the dataset based on the industrial periods
+industrial_year=1930
+
+pre_industrial_year = np.array([])
+pre_industrial_temp_mean = np.array([])
+pre_industrial_temp_std = np.array([])
+pre_industrial_co2_mean = np.array([])
+pre_industrial_co2_std = np.array([])
+
+post_industrial_year = np.array([])
+post_industrial_temp_mean = np.array([])
+post_industrial_temp_std = np.array([])
+post_industrial_co2_mean = np.array([])
+post_industrial_co2_std = np.array([])
+
+for i in range(len(year)):
+    if year[i]<industrial_year:
+        pre_industrial_year = np.append(pre_industrial_year, year[i])
+        pre_industrial_temp_mean = np.append(pre_industrial_temp_mean, temp_mean[i])
+        pre_industrial_temp_std = np.append(pre_industrial_temp_std, temp_std[i])
+        pre_industrial_co2_mean = np.append(pre_industrial_co2_mean, co2_mean[i])
+        pre_industrial_co2_std = np.append(pre_industrial_co2_std, co2_std[i])
+    elif year[i]>=industrial_year:
+        post_industrial_year = np.append(post_industrial_year, year[i])
+        post_industrial_temp_mean = np.append(post_industrial_temp_mean, temp_mean[i])
+        post_industrial_temp_std = np.append(post_industrial_temp_std, temp_std[i])
+        post_industrial_co2_mean = np.append(post_industrial_co2_mean, co2_mean[i])
+        post_industrial_co2_std = np.append(post_industrial_co2_std, co2_std[i])
 
 
-# plt.errorbar(year, temp_mean, yerr=temp_std, fmt='o', capsize=0, ecolor = "red", label = "Data", marker = ".", color = "red", markersize = 2)
+
+#Plotting the histogram
+bins_count = 40 #Setting the number of bins for the histogram
+plt.figure(figsize = (8, 16))
+
+#First subplot corresponding to the temperature
+plt.subplot(2, 1, 1)
+
+plt.hist(pre_industrial_temp_mean, bins = bins_count, label = "Pre-Industrial (<" +str(industrial_year)+")", density = True, alpha = 0.5)
+plt.hist(post_industrial_temp_mean, bins = bins_count, label = "Post-Industrial (>=" +str(industrial_year)+")", density = True, alpha = 0.5)
+plt.xlabel("Temperature Differences (°C)")
+plt.ylabel("Density")
+plt.legend()
+plt.title("Temperature Distribution Before and During the Industrial Revolution")
+
+plt.subplot(2, 1, 2)
+
+plt.hist(pre_industrial_co2_mean, bins = bins_count, label = "Pre-Industrial (<" +str(industrial_year)+")", density = True, alpha = 0.5)
+plt.hist(post_industrial_co2_mean, bins = bins_count, label = "Post-Industrial (>=" +str(industrial_year)+")", density = True, alpha = 0.5)
+plt.xlabel("CO2 levels (in unit of ppm)")
+plt.ylabel("Density")
+plt.legend()
+plt.title("CO2 Level Before and During the Industrial Revolution")
+
+plt.show()
+
+
+#Calculating the means of the datapoints corresponding to the temperature and co2 levels of different time periods
+
+mean_pre_ind_temp = np.mean(pre_industrial_temp_mean)
+std_pre_ind_temp = np.std(pre_industrial_temp_mean)
+mean_pre_ind_co2 = np.mean(pre_industrial_co2_mean)
+std_pre_ind_co2 = np.std(pre_industrial_co2_mean)
+
+mean_post_ind_temp = np.mean(post_industrial_temp_mean)
+std_post_ind_temp = np.std(post_industrial_temp_mean)
+mean_post_ind_co2 = np.mean(post_industrial_co2_mean)
+std_post_ind_co2 = np.std(post_industrial_co2_mean)
+
+print(f'Before Industrial Revolution: Temp Mean Diff = {mean_pre_ind_temp}°C, Temp Diff Std = {std_pre_ind_temp}°C, CO2 Mean = {mean_pre_ind_co2} ppm, CO2 Std = {std_pre_ind_co2} ppm')
+print(f'During Industrial Revolution: Temp Mean Diff = {mean_post_ind_temp}°C, Temp Diff Std = {std_post_ind_temp}°C, CO2 Mean = {mean_post_ind_co2} ppm, CO2 Std = {std_post_ind_co2} ppm')
+
+# Check for overlap: compare the distance between the mean values relative to the spread
+overlap_temp_check = (mean_post_ind_temp - mean_pre_ind_temp) < (std_pre_ind_temp + std_post_ind_temp)
+overlap_co2_check = (mean_post_ind_co2 - mean_pre_ind_co2) < (std_pre_ind_co2 + std_post_ind_co2)
+
+print(f'Do the temperature periods overlap: {overlap_temp_check}')
+print(f'Do the CO2 periods overlap: {overlap_co2_check}')
+
+
+####################################################################################################################################################
+#Plotting the prediction model
+#Curve fitting with the new parameter
+popt, pcov = curve_fit(log_model, co2_mean, temp_mean, sigma = temp_std, absolute_sigma = True)
+#Residual Calculation
+
+model_data = co2_mean*0
+model_residual = co2_mean*0
+
+for c in range(len(co2_mean)):
+    model_data[c] = log_model(co2_mean[c], popt[0], popt[1])
+    model_residual[c] = co2_mean[c] - model_data[c]
+
+#################################################################################################
+chi2=np.sum( (co2_mean - model_data)**2 / co2_std**2 )
+reduced_chi2 = chi2/(co2_mean.size - len(popt))
+
+print("Periodic Chi squared ", chi2)
+print("Periodic Chi reduced squared ", reduced_chi2)
+
+
+plt.figure(figsize = (8, 16))
+
+#First subplot corresponding to the original data set and the periodic model's fitting.
+plt.subplot(2, 1, 1)
+plt.errorbar(temp_mean, co2_mean, yerr=co2_std, fmt='o', capsize=0, ecolor = "red", label = "Data", marker = ".", color = "red", markersize = 2)
+plt.plot(log_model(co2_mean, popt[0], popt[1]), co2_mean, label = "Log Model Curve Fit", color="blue", linewidth =0.75)
+plt.xlabel("Temperature (°C)")
+plt.ylabel(r'$CO_2$ Level (in unit of ppm)')
+plt.legend()
+plt.title("Mean Temperature versus CO$_2$ level with log model curve fitting")
+
+#Second subplot for the residuals, with a newly defined variable zero_residual_line as the line where the residual is 0.
+# zero_residual_line = np.zeros(len(dec_date))
+# plt.subplot(2, 1, 2)
+# plt.plot(dec_date, zero_residual_line, label="Zero residual line")
+# plt.errorbar(dec_date, periodic_residual, yerr=unc, fmt='o', capsize=0, ecolor = "red", label = "Residual of the periodic model versus actual data", marker = ".", markersize = 10)
+# plt.xlabel("Year")
+# plt.ylabel(r'Error of $CO_2$ Level in the periodic model (in unit of ppm)')
+# plt.xticks(np.arange(1974, 2025, step = 5))
+# plt.legend()
+# plt.title("Residuals from the periodic model")
+# plt.show()
