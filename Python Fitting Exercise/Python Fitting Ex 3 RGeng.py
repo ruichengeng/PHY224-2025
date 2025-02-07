@@ -205,19 +205,36 @@ print(f'Do the CO2 periods overlap: {overlap_co2_check}')
 ####################################################################################################################################################
 #Plotting the prediction model
 #Curve fitting with the new parameter
-popt, pcov = curve_fit(log_model, co2_mean, temp_mean, sigma = temp_std, absolute_sigma = True)
+#From the PDF, we will discount the first 700 years of data, and use the latter ones for a more accurate prediction
+industrial_year=1700
+
+post_industrial_year = np.array([])
+post_industrial_temp_mean = np.array([])
+post_industrial_temp_std = np.array([])
+post_industrial_co2_mean = np.array([])
+post_industrial_co2_std = np.array([])
+
+for i in range(len(year)):
+    if year[i]>=industrial_year:
+        post_industrial_year = np.append(post_industrial_year, year[i])
+        post_industrial_temp_mean = np.append(post_industrial_temp_mean, temp_mean[i])
+        post_industrial_temp_std = np.append(post_industrial_temp_std, temp_std[i])
+        post_industrial_co2_mean = np.append(post_industrial_co2_mean, co2_mean[i])
+        post_industrial_co2_std = np.append(post_industrial_co2_std, co2_std[i])
+
+popt, pcov = curve_fit(log_model, post_industrial_co2_mean, post_industrial_temp_mean, sigma = post_industrial_temp_std, absolute_sigma = True)
 #Residual Calculation
 
-model_data = co2_mean*0
-model_residual = co2_mean*0
+model_data = post_industrial_co2_mean*0
+model_residual = post_industrial_co2_mean*0
 
-for c in range(len(co2_mean)):
-    model_data[c] = log_model(co2_mean[c], popt[0], popt[1])
-    model_residual[c] = co2_mean[c] - model_data[c]
+for c in range(len(post_industrial_co2_mean)):
+    model_data[c] = log_model(post_industrial_co2_mean[c], popt[0], popt[1])
+    model_residual[c] = post_industrial_temp_mean[c] - model_data[c]
 
 #################################################################################################
-chi2=np.sum( (co2_mean - model_data)**2 / co2_std**2 )
-reduced_chi2 = chi2/(co2_mean.size - len(popt))
+chi2=np.sum( (post_industrial_co2_mean - model_data)**2 / std_post_ind_temp**2 )
+reduced_chi2 = chi2/(post_industrial_co2_mean.size - len(popt))
 
 print("Periodic Chi squared ", chi2)
 print("Periodic Chi reduced squared ", reduced_chi2)
@@ -227,21 +244,20 @@ plt.figure(figsize = (8, 16))
 
 #First subplot corresponding to the original data set and the periodic model's fitting.
 plt.subplot(2, 1, 1)
-plt.errorbar(temp_mean, co2_mean, yerr=co2_std, fmt='o', capsize=0, ecolor = "red", label = "Data", marker = ".", color = "red", markersize = 2)
-plt.plot(log_model(co2_mean, popt[0], popt[1]), co2_mean, label = "Log Model Curve Fit", color="blue", linewidth =0.75)
-plt.xlabel("Temperature (°C)")
-plt.ylabel(r'$CO_2$ Level (in unit of ppm)')
+plt.errorbar(post_industrial_co2_mean, post_industrial_temp_mean, yerr=post_industrial_temp_std, fmt='o', capsize=0, ecolor = "red", label = "Data", marker = ".", color = "red", markersize = 2)
+plt.plot(post_industrial_co2_mean, log_model(post_industrial_co2_mean, popt[0], popt[1]), label = "Log Model Curve Fit", color="blue", linewidth =0.75)
+plt.ylabel("Temperature (°C)")
+plt.xlabel(r'$CO_2$ Level (in unit of ppm)')
 plt.legend()
-plt.title("Mean Temperature versus CO$_2$ level with log model curve fitting")
+plt.title("Mean CO$_2$ level versus Temperature with log model curve fitting")
 
 #Second subplot for the residuals, with a newly defined variable zero_residual_line as the line where the residual is 0.
-# zero_residual_line = np.zeros(len(dec_date))
-# plt.subplot(2, 1, 2)
-# plt.plot(dec_date, zero_residual_line, label="Zero residual line")
-# plt.errorbar(dec_date, periodic_residual, yerr=unc, fmt='o', capsize=0, ecolor = "red", label = "Residual of the periodic model versus actual data", marker = ".", markersize = 10)
-# plt.xlabel("Year")
-# plt.ylabel(r'Error of $CO_2$ Level in the periodic model (in unit of ppm)')
-# plt.xticks(np.arange(1974, 2025, step = 5))
-# plt.legend()
-# plt.title("Residuals from the periodic model")
-# plt.show()
+zero_residual_line = np.zeros(len(post_industrial_co2_mean))
+plt.subplot(2, 1, 2)
+plt.plot(post_industrial_co2_mean, zero_residual_line, label="Zero residual line")
+plt.errorbar(post_industrial_co2_mean, model_residual, yerr=post_industrial_temp_std, fmt='o', capsize=0, ecolor = "red", label = "Residual of the log model versus actual data", marker = ".", markersize = 10)
+plt.ylabel("Temperature (°C)")
+plt.xlabel(r'Error of $CO_2$ Level (in unit of ppm)')
+plt.legend()
+plt.title("Residuals from the periodic model")
+plt.show()
