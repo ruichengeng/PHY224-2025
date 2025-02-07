@@ -70,10 +70,10 @@ plt.subplot(2, 1, 1)
 
 plt.hist(pre_industrial_temp_mean, bins = bins_count, label = "Pre-Industrial (<" +str(industrial_year)+")", density = True, alpha = 0.5)
 plt.hist(post_industrial_temp_mean, bins = bins_count, label = "Post-Industrial (>=" +str(industrial_year)+")", density = True, alpha = 0.5)
-plt.xlabel("Temperature Differences (°C)")
+plt.xlabel("Temperature Changes (°C)")
 plt.ylabel("Density")
 plt.legend()
-plt.title("Temperature Distribution Before and During the Industrial Revolution")
+plt.title("Temperature Change Distribution Before and During the Industrial Revolution")
 
 plt.subplot(2, 1, 2)
 
@@ -162,10 +162,10 @@ plt.subplot(2, 1, 1)
 
 plt.hist(pre_industrial_temp_mean, bins = bins_count, label = "Pre-Industrial (<" +str(industrial_year)+")", density = True, alpha = 0.5)
 plt.hist(post_industrial_temp_mean, bins = bins_count, label = "Post-Industrial (>=" +str(industrial_year)+")", density = True, alpha = 0.5)
-plt.xlabel("Temperature Differences (°C)")
+plt.xlabel("Temperature Changes (°C)")
 plt.ylabel("Density")
 plt.legend()
-plt.title("Temperature Distribution Before and During the Industrial Revolution")
+plt.title("Temperature Change Distrubution Before and During the Industrial Revolution")
 
 plt.subplot(2, 1, 2)
 
@@ -206,7 +206,7 @@ print(f'Do the CO2 periods overlap: {overlap_co2_check}')
 #Plotting the prediction model
 #Curve fitting with the new parameter
 #From the PDF, we will discount the first 700 years of data, and use the latter ones for a more accurate prediction
-industrial_year=1700
+industrial_year=1000
 
 post_industrial_year = np.array([])
 post_industrial_temp_mean = np.array([])
@@ -223,6 +223,9 @@ for i in range(len(year)):
         post_industrial_co2_std = np.append(post_industrial_co2_std, co2_std[i])
 
 popt, pcov = curve_fit(log_model, post_industrial_co2_mean, post_industrial_temp_mean, sigma = post_industrial_temp_std, absolute_sigma = True)
+print("Parameter A's Uncertainty: ", np.sqrt(pcov[0][0]))
+print("Parameter B's Uncertainty: ", np.sqrt(pcov[1][1]))
+
 #Residual Calculation
 
 model_data = post_industrial_co2_mean*0
@@ -245,19 +248,19 @@ plt.figure(figsize = (8, 16))
 #First subplot corresponding to the original data set and the periodic model's fitting.
 plt.subplot(2, 1, 1)
 plt.errorbar(post_industrial_co2_mean, post_industrial_temp_mean, yerr=post_industrial_temp_std, fmt='o', capsize=0, ecolor = "red", label = "Data", marker = ".", color = "red", markersize = 2)
-plt.plot(post_industrial_co2_mean, log_model(post_industrial_co2_mean, popt[0], popt[1]), label = "Log Model Curve Fit", color="blue", linewidth =0.75)
-plt.ylabel("Temperature (°C)")
+plt.plot(post_industrial_co2_mean, log_model(post_industrial_co2_mean, popt[0], popt[1]), label = "Log Model Curve Fit: " + f'ΔT={np.round(popt[0],decimals=1)}Log($CO_2$)+{np.round(popt[1], decimals=1)}', color="blue", linewidth =0.75)
+plt.ylabel("Temperature Change (°C)")
 plt.xlabel(r'$CO_2$ Level (in unit of ppm)')
 plt.legend()
-plt.title("Mean CO$_2$ level versus Temperature with log model curve fitting")
+plt.title("Mean CO$_2$ level versus Temperature Change with log model curve fitting")
 
 #Second subplot for the residuals, with a newly defined variable zero_residual_line as the line where the residual is 0.
 zero_residual_line = np.zeros(len(post_industrial_co2_mean))
 plt.subplot(2, 1, 2)
 plt.plot(post_industrial_co2_mean, zero_residual_line, label="Zero residual line")
 plt.errorbar(post_industrial_co2_mean, model_residual, yerr=post_industrial_temp_std, fmt='o', capsize=0, ecolor = "red", label = "Residual of the log model versus actual data", marker = ".", markersize = 10)
-plt.ylabel("Temperature (°C)")
+plt.ylabel("Temperature Change (°C)")
 plt.xlabel(r'Error of $CO_2$ Level (in unit of ppm)')
 plt.legend()
-plt.title("Residuals from the periodic model")
+plt.title("Residuals from the log model")
 plt.show()
