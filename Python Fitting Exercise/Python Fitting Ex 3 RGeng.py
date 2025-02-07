@@ -205,39 +205,39 @@ print(f'Do the CO2 periods overlap: {overlap_co2_check}')
 ####################################################################################################################################################
 #Plotting the prediction model
 #Curve fitting with the new parameter
-#From the PDF, we will discount the first 700 years of data, and use the latter ones for a more accurate prediction
-industrial_year=1000
+#From the PDF, we will account only for the first 700 years of data for a more accurate prediction
+industrial_year=1700
 
-post_industrial_year = np.array([])
-post_industrial_temp_mean = np.array([])
-post_industrial_temp_std = np.array([])
-post_industrial_co2_mean = np.array([])
-post_industrial_co2_std = np.array([])
+pre_industrial_year = np.array([])
+pre_industrial_temp_mean = np.array([])
+pre_industrial_temp_std = np.array([])
+pre_industrial_co2_mean = np.array([])
+pre_industrial_co2_std = np.array([])
 
 for i in range(len(year)):
-    if year[i]>=industrial_year:
-        post_industrial_year = np.append(post_industrial_year, year[i])
-        post_industrial_temp_mean = np.append(post_industrial_temp_mean, temp_mean[i])
-        post_industrial_temp_std = np.append(post_industrial_temp_std, temp_std[i])
-        post_industrial_co2_mean = np.append(post_industrial_co2_mean, co2_mean[i])
-        post_industrial_co2_std = np.append(post_industrial_co2_std, co2_std[i])
+    if year[i]<=industrial_year:
+        pre_industrial_year = np.append(pre_industrial_year, year[i])
+        pre_industrial_temp_mean = np.append(pre_industrial_temp_mean, temp_mean[i])
+        pre_industrial_temp_std = np.append(pre_industrial_temp_std, temp_std[i])
+        pre_industrial_co2_mean = np.append(pre_industrial_co2_mean, co2_mean[i])
+        pre_industrial_co2_std = np.append(pre_industrial_co2_std, co2_std[i])
 
-popt, pcov = curve_fit(log_model, post_industrial_co2_mean, post_industrial_temp_mean, sigma = post_industrial_temp_std, absolute_sigma = True)
+popt, pcov = curve_fit(log_model, pre_industrial_co2_mean, pre_industrial_temp_mean, sigma = pre_industrial_temp_std, absolute_sigma = True)
 print("Parameter A's Uncertainty: ", np.sqrt(pcov[0][0]))
 print("Parameter B's Uncertainty: ", np.sqrt(pcov[1][1]))
 
 #Residual Calculation
 
-model_data = post_industrial_co2_mean*0
-model_residual = post_industrial_co2_mean*0
+model_data = pre_industrial_co2_mean*0
+model_residual = pre_industrial_co2_mean*0
 
-for c in range(len(post_industrial_co2_mean)):
-    model_data[c] = log_model(post_industrial_co2_mean[c], popt[0], popt[1])
-    model_residual[c] = post_industrial_temp_mean[c] - model_data[c]
+for c in range(len(pre_industrial_co2_mean)):
+    model_data[c] = log_model(pre_industrial_co2_mean[c], popt[0], popt[1])
+    model_residual[c] = pre_industrial_temp_mean[c] - model_data[c]
 
 #################################################################################################
-chi2=np.sum( (post_industrial_co2_mean - model_data)**2 / std_post_ind_temp**2 )
-reduced_chi2 = chi2/(post_industrial_co2_mean.size - len(popt))
+chi2=np.sum( (pre_industrial_co2_mean - model_data)**2 / std_pre_ind_temp**2 )
+reduced_chi2 = chi2/(pre_industrial_co2_mean.size - len(popt))
 
 print("Periodic Chi squared ", chi2)
 print("Periodic Chi reduced squared ", reduced_chi2)
@@ -247,20 +247,20 @@ plt.figure(figsize = (8, 16))
 
 #First subplot corresponding to the original data set and the periodic model's fitting.
 plt.subplot(2, 1, 1)
-plt.errorbar(post_industrial_co2_mean, post_industrial_temp_mean, yerr=post_industrial_temp_std, fmt='o', capsize=0, ecolor = "red", label = "Data", marker = ".", color = "red", markersize = 2)
-plt.plot(post_industrial_co2_mean, log_model(post_industrial_co2_mean, popt[0], popt[1]), label = "Log Model Curve Fit: " + f'ΔT={np.round(popt[0],decimals=1)}Log($CO_2$)+{np.round(popt[1], decimals=1)}', color="blue", linewidth =0.75)
+plt.errorbar(pre_industrial_co2_mean, pre_industrial_temp_mean, yerr=pre_industrial_temp_std, fmt='o', capsize=0, ecolor = "red", label = "Data", marker = ".", color = "red", markersize = 2)
+plt.plot(pre_industrial_co2_mean, log_model(pre_industrial_co2_mean, popt[0], popt[1]), label = "Log Model Curve Fit: " + f'ΔT={np.round(popt[0],decimals=1)}Log($CO_2$)+{np.round(popt[1], decimals=1)}', color="blue", linewidth =0.75)
 plt.ylabel("Temperature Change (°C)")
 plt.xlabel(r'$CO_2$ Level (in unit of ppm)')
 plt.legend()
-plt.title("Mean CO$_2$ level versus Temperature Change with log model curve fitting")
+plt.title("Mean CO$_2$ level versus Temperature Change with log model curve fitting (before 1700)")
 
 #Second subplot for the residuals, with a newly defined variable zero_residual_line as the line where the residual is 0.
-zero_residual_line = np.zeros(len(post_industrial_co2_mean))
+zero_residual_line = np.zeros(len(pre_industrial_co2_mean))
 plt.subplot(2, 1, 2)
-plt.plot(post_industrial_co2_mean, zero_residual_line, label="Zero residual line")
-plt.errorbar(post_industrial_co2_mean, model_residual, yerr=post_industrial_temp_std, fmt='o', capsize=0, ecolor = "red", label = "Residual of the log model versus actual data", marker = ".", markersize = 10)
-plt.ylabel("Temperature Change (°C)")
-plt.xlabel(r'Error of $CO_2$ Level (in unit of ppm)')
+plt.plot(pre_industrial_co2_mean, zero_residual_line, label="Zero residual line")
+plt.errorbar(pre_industrial_co2_mean, model_residual, yerr=pre_industrial_temp_std, fmt='o', capsize=0, ecolor = "red", label = "Residual of the log model versus actual data", marker = ".", markersize = 10)
+plt.ylabel("Error of Temperature Change (°C)")
+plt.xlabel(r'$CO_2$ Level (in unit of ppm)')
 plt.legend()
-plt.title("Residuals from the log model")
+plt.title("Residuals from the log model (before 1700)")
 plt.show()
