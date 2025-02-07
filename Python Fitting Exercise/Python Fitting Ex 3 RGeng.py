@@ -236,11 +236,11 @@ for c in range(len(pre_industrial_co2_mean)):
     model_residual[c] = pre_industrial_temp_mean[c] - model_data[c]
 
 #################################################################################################
-chi2=np.sum( (pre_industrial_co2_mean - model_data)**2 / std_pre_ind_temp**2 )
-reduced_chi2 = chi2/(pre_industrial_co2_mean.size - len(popt))
+chi2=np.sum( (pre_industrial_temp_mean - model_data)**2 / pre_industrial_temp_std**2 )
+reduced_chi2 = chi2/(pre_industrial_temp_mean.size - len(popt))
 
-print("Periodic Chi squared ", chi2)
-print("Periodic Chi reduced squared ", reduced_chi2)
+print("Chi squared ", chi2)
+print("Chi reduced squared ", reduced_chi2)
 
 
 plt.figure(figsize = (8, 16))
