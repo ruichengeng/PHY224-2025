@@ -23,7 +23,7 @@ pt2_up_time, pt2_up_volt, pt2_down_time, pt2_down_volt = np.loadtxt("circuit_pt2
 
 
 def volt_model_up(x_val, R, C):
-    return pt2_up_volt[0]*np.exp((x_val)/(R*C))
+    return pt2_up_volt[0]*np.exp((x_val-pt2_up_time[0])/(R*C))
 
 def volt_model_down(x_val, R, C):
     return pt2_down_volt[0]*np.exp((-1*x_val)/(R*C))
