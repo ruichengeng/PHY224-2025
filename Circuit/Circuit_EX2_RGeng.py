@@ -17,7 +17,7 @@ from scipy.optimize import curve_fit #The main component of this fitting exercis
 import matplotlib.pyplot as plt #Handles the plotting aspect of this lab
 
 
-source, volt, amp = np.loadtxt("Circuit_Lab_Ex2_Data.csv", delimiter = ',', skiprows=1, unpack=True)
+source, volt, amp, volt_unc, amp_unc = np.loadtxt("Circuit_Lab_Ex2_Data.csv", delimiter = ',', skiprows=1, unpack=True)
 
 
 def power_model(x_val, a, b):#x_val is the voltage
@@ -26,7 +26,7 @@ def power_model(x_val, a, b):#x_val is the voltage
 def linear_log_model(x_val, a, b):
     return b*np.log(x_val)+np.log(a) #Returns the log of the current
 
-popt, pcov = curve_fit(power_model, volt, amp)
+popt, pcov = curve_fit(power_model, volt, amp, p0=(8.5, 0.6), sigma=amp_unc, absolute_sigma=True)
 
 plt.plot(volt, amp, color = "blue")
 plt.plot(volt, power_model(volt, popt[0], popt[1]), color = "red")
