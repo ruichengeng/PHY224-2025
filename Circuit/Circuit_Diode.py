@@ -45,12 +45,13 @@ def linear_log_model(x_val, a, b):
 def exponential_model(x_val, a, b, c, d):
     return a*(b**(c*x_val+d))
 
-
+def shockley_model(x_val, a, b, c):
+    return a*(np.exp(b*x_val)-c)
 
 # exp_popt, exp_pcov = curve_fit(exponential_model, forward_volt, forward_amp, p0 = (0.6353310698, 1031.75089, 3.723623702, -2.268601667), sigma=forward_amp_unc, absolute_sigma = True, maxfev = 10000)
 exp_popt, exp_pcov = curve_fit(exponential_model, volt, amp, p0 = (0.6353310698, 1031.75089, 3.723623702, -2.268601667), sigma=amp_unc, absolute_sigma = True, maxfev = 10000)
 
-
+shock_popt, shock_pcov = curve_fit(shockley_model, volt, amp, p0 = (0.6353310698, 25.0, 0.1), sigma=amp_unc, absolute_sigma = True, maxfev = 10000)
 
 
 
@@ -69,6 +70,14 @@ plt.errorbar(volt, amp, xerr=volt_unc, yerr=amp_unc, fmt='o', ecolor="red", labe
 exp_volt=np.arange(-1.5, 0.9, 0.05)
 plt.plot(exp_volt, exponential_model(exp_volt, exp_popt[0], exp_popt[1], exp_popt[2], exp_popt[3]), label="Positive Exp Model Fitting", color="blue", linewidth = 1)
 plt.xticks(np.arange(-1.5,1.0, step=0.25))
+
+
+
+
+
+plt.plot(exp_volt, shockley_model(exp_volt, shock_popt[0], shock_popt[1], shock_popt[2]), label="Shockley Model Fitting", color="green", linewidth = 1)
+
+
 
 # plt.xscale('log')
 # plt.yscale('log')
