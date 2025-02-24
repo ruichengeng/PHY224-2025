@@ -4,7 +4,6 @@ Created on Fri Feb 21 06:06:02 2025
 
 Turki Almansoori
 Rui (Richard) Chen Geng Li
-Student number: 1003048454
 
 Code created for PHY224 Fitting Exercise 3
 Prof. Sergio De La Barrera
