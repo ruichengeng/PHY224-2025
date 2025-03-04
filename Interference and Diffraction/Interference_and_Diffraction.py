@@ -29,6 +29,7 @@ intensity = intensity[count:-count]
 
 max_index = 0   
 max_intensity = 0.0
+max_position = 0.0
 
 wavelength = 650e-9    # 650 nm in meters
 
@@ -39,6 +40,7 @@ for i in range(len(intensity)):
     if intensity[i] > max_intensity:
         max_index = i
         max_intensity = intensity[i]
+        max_position = position[i]
 
 def id_model(x_val, a, b, c):
     #return a*np.sin(b*x_val+c)/(x_val+d)
@@ -91,4 +93,41 @@ plt.plot(position, double_slit_model(position, *popt), color = "blue", label = "
 plt.xlabel("Position (m)")
 plt.ylabel("Intensity (V)")
 plt.legend()
+
+plt.show()
+
+
+double_slit_Prediction = double_slit_model(position, *popt)
+
+residual = np.abs(intensity - double_slit_Prediction)
+residual_pos = position[residual>=0.0]
+residual = residual[residual>=0.0]
+
+
+
+
+
+def residual_sin_model(x_val, I0, k, is_Single = False):
+    theta = np.arcsin((x_val - position[max_index]) * k)
+    
+    phi = np.pi * w * np.sin(theta) / wavelength
+    phi = np.where(phi == 0, 1e-9, phi)    
+    beta = np.pi * d * np.sin(theta) / wavelength
+
+    single_slit = (np.sinc(phi / np.pi)) ** 2
+    double_slit = np.cos(beta) ** 2
+    if (is_Single):
+        return I0 * single_slit
+    else:
+        return I0 * single_slit * double_slit
+
+res_popt, res_pcov = curve_fit(residual_sin_model, residual_pos, residual)
+
+plt.plot(residual_pos, residual_sin_model(position, *res_popt[:-1], True), color = "green")
+
+plt.plot(position, np.zeros(position.size), color = "blue")
+plt.plot(position, residual, color = "red")
+
+
+
 plt.show()
