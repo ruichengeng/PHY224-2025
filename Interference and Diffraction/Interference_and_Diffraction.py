@@ -103,7 +103,10 @@ residual = np.abs(intensity - double_slit_Prediction)
 residual_pos = position[residual>=0.0]
 residual = residual[residual>=0.0]
 
-
+#Version 2, finding the peaks
+peaks, properties = scipy.signal.find_peaks(residual)
+residual = residual[peaks]
+residual_pos = residual_pos[peaks]
 
 
 
@@ -123,11 +126,36 @@ def residual_sin_model(x_val, I0, k, is_Single = False):
 
 res_popt, res_pcov = curve_fit(residual_sin_model, residual_pos, residual)
 
-plt.plot(residual_pos, residual_sin_model(position, *res_popt[:-1], True), color = "green")
+plt.figure(figsize=(15, 8))
+plt.plot(residual_pos, residual_sin_model(residual_pos, *res_popt[:-1], True), color = "green")
 
 plt.plot(position, np.zeros(position.size), color = "blue")
-plt.plot(position, residual, color = "red")
+plt.plot(residual_pos, residual, color = "red")
 
 
+
+plt.show()
+
+# plt.plot(position, id_model(position, popt[0], popt[1], popt[2], popt[3]), color = "red")
+#plt.plot(position, temp_model(position, popt[0], popt[1], popt[2], popt[3], popt[4]), color = "red")
+
+# plt.plot(position, temp_model(position, popt[0], popt[1]), color = "red")
+# plt.plot(position, max_intensity*(np.sin(400*(position-position[max_index]))/(400*(position-position[max_index])))**2)
+
+new_measured_data = intensity
+
+for r in range(len(position)):
+    if position[r] >= residual_pos[0] and position[r] <= residual_pos[-1]:
+        new_measured_data[r]-= residual_sin_model(position[r], *res_popt[:-1], True)
+
+plt.figure(figsize=(15, 8))
+plt.errorbar(position, new_measured_data, fmt='o', color = "red", label = "Measured Data")
+
+plt.plot(position, double_slit_model(position, *popt), color = "blue", label = "Fitted Data")
+
+# plt.plot(position, id_model(position, popt[0], popt[1], popt[2]), color = "red")
+plt.xlabel("Position (m)")
+plt.ylabel("Intensity (V)")
+plt.legend()
 
 plt.show()
