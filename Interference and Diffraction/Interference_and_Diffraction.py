@@ -126,8 +126,10 @@ def residual_sin_model(x_val, I0, k, is_Single = False):
 
 res_popt, res_pcov = curve_fit(residual_sin_model, residual_pos, residual)
 
+residual_model_data = residual_sin_model(residual_pos, *res_popt[:-1], True)
+
 plt.figure(figsize=(15, 8))
-plt.plot(residual_pos, residual_sin_model(residual_pos, *res_popt[:-1], True), color = "green")
+plt.plot(residual_pos, residual_model_data, color = "green")
 
 plt.plot(position, np.zeros(position.size), color = "blue")
 plt.plot(residual_pos, residual, color = "red")
@@ -159,3 +161,31 @@ plt.ylabel("Intensity (V)")
 plt.legend()
 
 plt.show()
+
+
+
+wheel_sensor_dist = 0.515
+
+max_residual_intensity = 0.0
+max_residual_pos = 0.0
+max_residual_index = 0
+for a in range(len(residual_model_data)):
+    if residual_model_data[a] > max_residual_intensity:
+        max_residual_intensity = residual_model_data[a]
+        max_residual_pos = residual_pos[a]
+        max_residual_index = a
+
+first_min_residual_intensity = 100.0
+first_min_residual_pos = 0.0
+
+for j in range(max_residual_index, max_residual_index+30):
+    if residual_model_data[j] < first_min_residual_intensity:
+        first_min_residual_intensity = residual_model_data[j]
+        first_min_residual_pos = residual_pos[j]
+
+
+central_to_min_dist = np.abs(max_residual_pos - first_min_residual_pos)
+
+residual_slit_width = wavelength / (central_to_min_dist/(np.sqrt(wheel_sensor_dist**2 + central_to_min_dist**2)))
+
+print("Slit distance is ", residual_slit_width)
