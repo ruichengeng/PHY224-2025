@@ -25,6 +25,11 @@ position, intensity = np.loadtxt("double_slit_data_100x.txt",
                                                   delimiter = '\t', 
                                                   skiprows=2, unpack=True)
 
+# position= position[int(position.size/2):]
+# intensity = intensity[int(intensity.size/2):]
+# count = int(position.size/3)
+# position = position[:-count]
+# intensity = intensity[:-count]
 
 count = int(position.size/3)
 position = position[count:-count]
@@ -37,8 +42,8 @@ max_position = 0.0
 wavelength = 650e-9    # 650 nm in meters
 wheel_sensor_dist = 0.515 #distance between the light sensor and the slit wheel
 
-d = 0.25e-3  # Slit separation: 0.25 mm in meters
 a = 0.04e-3  # Slit width: 0.04 mm in meters
+d = 0.25e-3  # Slit separation: 0.25 mm in meters
 # d = 0.5e-3  # Slit separation: 0.25 mm in meters
 # a = 0.04e-3  # Slit width: 0.04 mm in meters
 
@@ -78,14 +83,14 @@ def double_slit_model(x_val, a, b, c, d):
     #theta = np.arcsin(wavelength / a)
     sin_theta = (x_val - max_position)/(np.sqrt(wheel_sensor_dist**2 + (x_val - max_position)**2))
     
-    phi = np.pi * a * sin_theta / wavelength
+    phi = np.pi * a *sin_theta / (wavelength)
     beta = np.pi * b * sin_theta / wavelength
 
-    single_slit = (np.sinc(phi)) ** 2
+    single_slit = (np.sinc(phi/np.pi)) ** 2
     double_slit = (np.cos(beta)) ** 2
-    offset_slit = (np.sinc(phi)) ** 2
+    offset_slit = (np.sinc(phi/np.pi)) ** 2
 
-    return d* max_intensity * (single_slit * double_slit) - c* offset_slit
+    return d*max_intensity * (single_slit * double_slit) - c* offset_slit
 
 # def id_model(x_val, a, b, c):
 #     return a*np.sin(b*(x_val-position[max_index])/(c*(x_val-position[max_index])))
@@ -95,13 +100,17 @@ def double_slit_model(x_val, a, b, c, d):
 # popt, pcov = curve_fit(temp_model, position, intensity, p0=(400.0, 400.0), maxfev = 100000)
 #popt, pcov = curve_fit(temp_model, position, intensity, p0=(0.0004, 1.0), maxfev = 100000)
 
-popt, pcov = curve_fit(double_slit_model, position, intensity, p0=(a, d, 0.4, 0.5))
+popt, pcov = curve_fit(double_slit_model, position, intensity, p0=(a, d, max_intensity, 0.5))
+
+
+print("Number of fringes: ", popt[1]/popt[0])
+
 
 
 print("a value is: ", wavelength/(max_position*popt[1]))
 
 plt.figure(figsize=(15, 8))
-plt.errorbar(position, intensity, fmt='o', color = "red", label = "Measured Data")
+plt.errorbar(position, intensity, fmt='o', color = "red", label = "Measured Data", markersize=1)
 # plt.plot(position, id_model(position, popt[0], popt[1], popt[2], popt[3]), color = "red")
 #plt.plot(position, temp_model(position, popt[0], popt[1], popt[2], popt[3], popt[4]), color = "red")
 
