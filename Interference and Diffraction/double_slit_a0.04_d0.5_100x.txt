@@ -1,7 +1,5 @@
 Interference and Diffraction Data File Fri, Feb 28, 2025 3:57 PM
 Sensor Position (Meters)	Light Intensity (Volts)
-0.00000	-0.00106
-0.00000	-0.00235
 -0.00006	-0.00331
 -0.00011	-0.00396
 -0.00022	-0.00186
@@ -2061,7 +2059,3 @@ Sensor Position (Meters)	Light Intensity (Volts)
 -0.13194	-0.00138
 -0.13200	0.00136
 -0.13205	0.00120
-0.00000	-0.00122
-0.00000	-0.00025
--0.00006	-0.00267
--0.00011	-0.00283

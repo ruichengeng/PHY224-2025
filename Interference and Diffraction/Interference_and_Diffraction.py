@@ -21,6 +21,10 @@ import matplotlib.pyplot as plt
 
 #Begin by reading all of the data files corresponding to our different config setups
 #Then assign the theoretical/manufacturer intended values of slit distance and separation
+
+#NOTE: Uncertainty for the intensity was obtained via estimation of the data using cursor,
+#since no manufacturer data regarding reading accuracy nor resolution.
+
 #Configuration 1
 position_config1, intensity_config1 = np.loadtxt("double_slit_data_100x.txt", 
                                                   delimiter = '\t', 
@@ -29,7 +33,7 @@ position_config1, intensity_config1 = np.loadtxt("double_slit_data_100x.txt",
 position_config1 = position_config1[intensity_config1>=0.0]
 intensity_config1 = intensity_config1[intensity_config1>=0.0]
 pos1_unc = np.ones(position_config1.size)*0.00006
-intensity1_unc = np.ones(position_config1.size)*0.005
+intensity1_unc = np.ones(position_config1.size)*0.002
 a1 = 0.04e-3  # Slit width: 0.04 mm in meters
 d1 = 0.25e-3  # Slit separation: 0.25 mm in meters
 
@@ -41,7 +45,7 @@ position_config2, intensity_config2 = np.loadtxt("double_slit_a0.04_d0.5_100x.tx
 position_config2 = position_config2[intensity_config2>=0.0]
 intensity_config2 = intensity_config2[intensity_config2>=0.0]
 pos2_unc = np.ones(position_config2.size)*0.00006
-intensity2_unc = np.ones(position_config2.size)*0.005
+intensity2_unc = np.ones(position_config2.size)*0.001
 a2 = 0.04e-3  # Slit width: 0.04 mm in meters
 d2 = 0.5e-3  # Slit separation: 0.25 mm in meters
 
@@ -53,7 +57,7 @@ position_config3, intensity_config3 = np.loadtxt("double_slit_a0.08_d0.25_10x.tx
 position_config3 = position_config3[intensity_config3>=0.0]
 intensity_config3 = intensity_config3[intensity_config3>=0.0]
 pos3_unc = np.ones(position_config3.size)*0.00011
-intensity3_unc = np.ones(position_config3.size)*0.01
+intensity3_unc = np.ones(position_config3.size)*0.002
 a3 = 0.08e-3  # Slit width: 0.04 mm in meters
 d3 = 0.25e-3  # Slit separation: 0.25 mm in meters
 
@@ -68,14 +72,6 @@ def Run_Slits_Models(position, intensity, pos_unc, intensity_unc, a, d):
     max_index = 0   
     max_intensity = 0.0
     max_position = 0.0
-    
-    #Refining the dataset, so that the curve fit will be performed to only the "middle" region.
-    uncleaned_position_size = position.size
-    # count = int(position.size/3)
-    # position = position[count:-count]
-    # intensity = intensity[count:-count]
-    # pos_unc = pos_unc[count:-count]
-    # intensity_unc = intensity_unc[count:-count]
     
     for i in range(len(intensity)):
         if intensity[i] > max_intensity:
@@ -108,7 +104,7 @@ def Run_Slits_Models(position, intensity, pos_unc, intensity_unc, a, d):
     print("c value (predicted offset scalar value) is: ", popt[2], " ± ", np.sqrt(pcov[2][2]))
     print("d value (predicted maximum intensity scalar) is: ", popt[3], " ± ", np.sqrt(pcov[3][3]))
     
-    plt.figure(figsize=(15, 8))
+    plt.figure(figsize=(12, 6))
     plt.errorbar(position, intensity, xerr=pos_unc, yerr=intensity_unc, fmt='o', color = "red", label = "Measured Data", markersize=1)
     plt.plot(position, double_slit_model(position, *popt), color = "blue", label = "Model Data")
     
@@ -120,13 +116,12 @@ def Run_Slits_Models(position, intensity, pos_unc, intensity_unc, a, d):
     
     plt.show()
     
-    #Zoom
-    plt.figure(figsize=(15, 8))
+    #Zooming in to the central region
+    plt.figure(figsize=(12, 6))
     plt.errorbar(position, intensity, xerr=pos_unc, yerr=intensity_unc, fmt='o', color = "red", label = "Measured Data", markersize=1)
     plt.plot(position, double_slit_model(position, *popt), color = "blue", label = "Model Data")
-    
+    plt.xlim(position[max_index-195], position[max_index+195])
     plt.xlabel("Position (m)")
-    plt.xticks(np.arange(position[int(position.size/3):2*int(position.size/3)], step = 0.01))
     plt.ylabel("Intensity (V)")
     config_text = 'a=' + str(a*1000.0) + 'mm, d=' + str(d*1000.0) + 'mm'
     plt.title("Double Slit Measurement Data versus Prediction Model Data. Configuration: "+ config_text)
@@ -134,31 +129,15 @@ def Run_Slits_Models(position, intensity, pos_unc, intensity_unc, a, d):
     
     plt.show()
     
-    
+    #Calculation of the residuals
+    #Prediction values
     double_slit_Prediction = double_slit_model(position, *popt)
+    #Definition of residual = difference between measured and prediction data
+    residual = intensity - double_slit_Prediction
     
-    residual = np.abs(intensity - double_slit_Prediction)    
-    
-    #Reduced Chi square
-    chi2=np.sum( (intensity - double_slit_Prediction)**2 / (np.abs(pos_unc/position))**2 )
-    reduced_chi2 = chi2/(uncleaned_position_size - popt.size)
-    print("The reduced chi square value is: ", reduced_chi2)
-    
-    # residual_pos_unc = pos_unc[residual>=0.0]
-    # residual_int_unc = intensity_unc[residual>=0.0]
-    # residual_pos = position[residual>=0.0]
-    # residual = residual[residual>=0.0]
-    
-    #Version 2, finding the peaks
-    peaks, properties = scipy.signal.find_peaks(residual)
-    residual_pos = position[peaks]
-    residual_pos_unc = pos_unc[peaks]
-    residual_int_unc = intensity_unc[peaks]
-    residual = residual[peaks]
-    
-    plt.figure(figsize=(15, 8))    
+    plt.figure(figsize=(12, 6))    
     plt.plot(position, np.zeros(position.size), color = "blue", label = "Zero Residual Line")
-    plt.errorbar(residual_pos, residual, xerr=residual_pos_unc, yerr=residual_int_unc, fmt ='o', color = "red", label = "Model Residual")
+    plt.errorbar(position, residual, xerr=pos_unc, yerr=intensity_unc, fmt ='o', color = "red", label = "Model Residual", markersize=1)
     plt.title("Residual Plot of Prediction Data versus Measured Data")
     plt.xlabel("Position (m)")
     plt.ylabel("Error in Intensity (V)")
@@ -166,21 +145,15 @@ def Run_Slits_Models(position, intensity, pos_unc, intensity_unc, a, d):
     
     plt.show()
     
-    ###############################
+    #Calculation of the reduced chi square values
+    #First obtain the standard deviation, so that we can then obtain the variance of position.
+    position_std = np.sqrt(np.sum((position-np.mean(position))**2)/position.size)
+    reduced_chi2 = np.sum((intensity-double_slit_Prediction)**2/position_std**2) /(position.size - popt.size)
+    print ("The Reduced Chi Square Value is: ", reduced_chi2)
     
-    intensity_std = np.sqrt(np.sum((position-np.mean(position))**2)/position.size)
-    #intensity_std = np.sqrt(np.sum((intensity-np.mean(intensity))**2)/intensity.size)
+    
 
-    # defining a function to calculate chi^2_red
-    def chi2r(measured, predicted, errors, num_of_parameters):
-        return np.sum((measured-predicted)**2/errors**2) / \
-               (measured.size - num_of_parameters)
-    
-    print('Reduced Chi Squared of Nonlinear Curve Fit is:',
-          chi2r(intensity, double_slit_model(position, *popt), intensity_std, popt.size))
-    
-    
-    
+#Running the main function for each of our dataset.
 Run_Slits_Models(position_config1, intensity_config1, pos1_unc, intensity1_unc, a1, d1)
 Run_Slits_Models(position_config2, intensity_config2, pos2_unc, intensity2_unc, a2, d2)
 Run_Slits_Models(position_config3, intensity_config3, pos3_unc, intensity3_unc, a3, d3)
