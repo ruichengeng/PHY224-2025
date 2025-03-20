@@ -58,26 +58,40 @@ print ("The Reduced Chi Square Value is: ", reduced_chi2)
 ###################### Index of Refraction ################################
 
 #Reading Data
-ir_reading, ir_min, ir_dN, ir_min_unc = np.loadtxt("Index of Refraction Data.csv", 
+ir_reading, ir_min, ir_dN, ir_min_unc, ir_dN_unc = np.loadtxt("Index_of_Refraction_2.csv", 
                                                   delimiter = ',', 
                                                   skiprows=1, unpack=True)
 
-ir_dN=ir_dN[::-1]
+# ir_dN=ir_dN[::-1]
 
 ir_dN_Per_dx = np.zeros(ir_dN.size)
-ir_dN_Per_dx[0]=ir_reading[0]
+ir_dN_Per_dx[0]=ir_dN[0]
 for n in range(1, len(ir_dN)):
     ir_dN_Per_dx[n]=ir_dN[n]+ir_dN_Per_dx[n-1]
 
 
-ir_reading += ir_min*0.01
+ir_reading += ir_min/60.0
+ir_reading_unc = ir_min_unc/60.0
 
-ir_reading_init = ir_reading[0]
-ir_reading *= -1.0
-ir_reading += ir_reading_init
+# ir_reading_init = ir_reading[0]
+# ir_reading *= -1.0
+# ir_reading += ir_reading_init
 #Variables
-gamma = 650e-9 #Temp for the wavelength
-thickness = 7e-6 #mm converted to nm
+gamma = 534e-9 #Temp for the wavelength
+thickness = 7e-3 #mm converted to m
+
+
+ir_reading*=-1.0
+
+# ir_reading=ir_reading[::-1]
+# ir_dN_Per_dx=ir_dN_Per_dx[::-1]
+# ir_dN_unc = ir_dN_unc[::-1]
+# ir_reading_unc = ir_reading_unc[::-1]
+
+ir_dN_unc_old = np.array(ir_dN_unc)
+#dN Uncertainty propagation
+for u in range(1, len(ir_dN_unc)):
+    ir_dN_unc[u]=np.sqrt((ir_dN_unc[u-1]**2) + (ir_dN_unc[u]**2))
 
 #Prediction Model
 #Index of Refraction
@@ -87,14 +101,18 @@ thickness = 7e-6 #mm converted to nm
 #     return (((x_val*gamma/(2.0*a))+np.cos(b)-1)**2 + np.sin(b)**2)/(2.0*(1.0-np.cos(b)-(x_val*gamma/(2.0*a))))
 
 
-def index_refraction_2(x_val, a):
-    return (thickness/cf_popt[0])*(x_val**2)*(1.0-(1.0/a))
+def index_refraction_2(x_val, a, b):
+    #return (thickness/cf_popt[0])*((x_val-b)**2)*(1.0-(1.0/a))
+    return (thickness/gamma)*((x_val-b)**2)*(1.0-(1.0/a))
 
-ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading[1:], ir_dN_Per_dx[1:], sigma = np.ones(ir_reading[1:].size)*0.5, absolute_sigma = True)
+# ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading[1:], ir_dN_Per_dx[1:], sigma = np.ones(ir_reading[1:].size)*0.5, absolute_sigma = True)
+#ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading, ir_dN_Per_dx, p0=(1.5, -30.0),sigma = ir_dN_unc, absolute_sigma = True, maxfev = 100000)
 
 
 plt.errorbar(ir_reading, ir_dN_Per_dx, xerr=ir_min_unc*0.01, color = "red", label = "Index of Refraction Measurement")
-plt.plot(ir_reading, index_refraction_2(ir_reading, *ir_popt), color = "blue", label = "Prediction")
+#plt.plot(ir_reading, index_refraction_2(ir_reading, *ir_popt), color = "blue", label = "Prediction")
+# plt.plot(np.arange(-30.0, 0.0, 0.5), index_refraction_2(np.arange(-30.0, 0.0, 0.5), 1.015, -30.0), color = "blue")
+plt.plot(ir_reading, index_refraction_2(ir_reading, 1+1.5e-4, -30.0), color = "blue")
 
 plt.legend()
 
