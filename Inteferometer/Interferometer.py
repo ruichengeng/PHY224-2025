@@ -17,7 +17,7 @@ from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt 
 
 #Data imports
-reading, dN, reading_unc, dN_unc = np.loadtxt("Final_Wavelength_data - Copy.csv", 
+w_reading, w_dN, w_reading_unc, w_dN_unc = np.loadtxt("Final_Wavelength_data - Copy.csv", 
                                                   delimiter = ',', 
                                                   skiprows=1, unpack=True)
 
@@ -26,34 +26,31 @@ reading, dN, reading_unc, dN_unc = np.loadtxt("Final_Wavelength_data - Copy.csv"
 def deltaN(x_val, a):
     return x_val*(2.0/a)
 
-dN_Per_dx = np.zeros(dN.size)
-dN_Per_dx[0]=reading[0]
-for n in range(1, len(dN)):
-    dN_Per_dx[n]=dN[n]+dN_Per_dx[n-1]
+w_dN_Per_dx = np.zeros(w_dN.size)
+w_dN_Per_dx[0]=w_reading[0]
+for n in range(1, len(w_dN)):
+    w_dN_Per_dx[n]=w_dN[n]+w_dN_Per_dx[n-1]
     
 #Curve_fit
-cf_popt, cf_pcov = curve_fit(deltaN, reading, dN_Per_dx, p0=(0.57), sigma=dN_unc, absolute_sigma = True)
-# cf_popt, cf_pcov = curve_fit(deltaN, reading, dN, p0=(0.5), sigma=dN_unc, absolute_sigma = True)
+w_popt, w_pcov = curve_fit(deltaN, w_reading, w_dN_Per_dx, p0=(0.57), sigma=w_dN_unc, absolute_sigma = True)
 
 #Plotting
-# plt.errorbar(reading, dN, xerr=reading_unc, yerr=dN_unc, label = "Measured Data")
-plt.errorbar(reading, dN_Per_dx, xerr=reading_unc, yerr=dN_unc, label = "Measured Data")
-plt.plot(reading, deltaN(reading, *cf_popt), color = "red", label="Prediction Data")
-plt.plot(reading, deltaN(reading, 0.57)-10.0, color = "black", label="temp")
+plt.errorbar(w_reading, w_dN_Per_dx, xerr=w_reading_unc, yerr=w_dN_unc, label = "Measured Data")
+plt.plot(w_reading, deltaN(w_reading, *w_popt), color = "red", label="Prediction Data")
+plt.xlabel("Change in unit of micrometer (µm)")
+plt.ylabel("Change in unit of fringe count")
+plt.title("Wavelength Prediction (change in mirror distance in µm versus change in fringe count)")
 plt.legend()
 plt.show()
 
 #Printing the predicted wavelength
-print("Predicted Wavelength = ", cf_popt[0]*1000.0, "nm ± ", np.sqrt(cf_pcov[0][0])*1000.0, "nm")
+print("Predicted Wavelength = ", w_popt[0]*1000.0, "nm ± ", np.sqrt(w_pcov[0][0])*1000.0, "nm")
 
-position_std = np.sqrt(np.sum((reading-np.mean(reading))**2)/reading.size)
-#position_std += reading_unc*2.0
-#position_std = reading_unc
-reduced_chi2 = np.sum((reading-deltaN(reading, *cf_popt))**2/position_std**2) /(reading.size - cf_popt.size)
+w_std = np.sqrt(np.sum((w_reading-np.mean(w_reading))**2)/w_reading.size)
+reduced_chi2 = np.sum((w_reading-deltaN(w_reading, *w_popt))**2/w_std**2) /(w_reading.size - w_popt.size)
 print ("The Reduced Chi Square Value is: ", reduced_chi2)
 
-#position_std = np.sqrt(np.sum((position-np.mean(position))**2)/position.size)
-reduced_chi2 = np.sum((reading-deltaN(reading, 0.57)-10.0)**2/position_std**2) /(reading.size - cf_popt.size)
+reduced_chi2 = np.sum((w_reading-deltaN(w_reading, 0.57)-10.0)**2/w_std**2) /(w_reading.size - w_popt.size)
 print ("The Reduced Chi Square Value is: ", reduced_chi2)
 ###################### Index of Refraction ################################
 
@@ -73,23 +70,14 @@ for n in range(1, len(ir_dN)):
 ir_reading += ir_min/60.0
 ir_reading_unc = ir_min_unc/60.0
 
-# ir_reading_init = ir_reading[0]
-# ir_reading *= -1.0
-# ir_reading += ir_reading_init
 #Variables
-gamma = 534e-9 #Temp for the wavelength
 thickness = 7e-3 #mm converted to m
-
 
 ir_reading*=-1.0
 ir_reading-=ir_reading[0]
 ir_reading = np.radians(ir_reading)
 
 ir_reading_unc = np.radians(ir_reading_unc)
-# ir_reading=ir_reading[::-1]
-# ir_dN_Per_dx=ir_dN_Per_dx[::-1]
-# ir_dN_unc = ir_dN_unc[::-1]
-# ir_reading_unc = ir_reading_unc[::-1]
 
 ir_dN_unc[0]=0.1
 ir_dN_unc_old = np.array(ir_dN_unc)
@@ -99,36 +87,26 @@ for u in range(1, len(ir_dN_unc)):
 
 #Prediction Model
 #Index of Refraction
-# def index_refraction(x_val, a, b):
-#     #a is t for thickness
-#     #b is theta
-#     return (((x_val*gamma/(2.0*a))+np.cos(b)-1)**2 + np.sin(b)**2)/(2.0*(1.0-np.cos(b)-(x_val*gamma/(2.0*a))))
-
-
 def index_refraction_2(x_val, a):
-    return (thickness/(cf_popt[0]*1e-6))*((x_val)**2)*(1.0-(1.0/a))
-    #return (thickness/gamma)*((x_val)**2)*(1.0-(1.0/a))
+    return (thickness/(w_popt[0]*1e-6))*((x_val)**2)*(1.0-(1.0/a))
 
-# ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading[1:], ir_dN_Per_dx[1:], sigma = np.ones(ir_reading[1:].size)*0.5, absolute_sigma = True)
-#ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading, ir_dN_Per_dx, p0=(1.5),sigma = ir_dN_unc, absolute_sigma = True, maxfev = 100000)
 ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading, ir_dN_Per_dx, p0=(1.68), sigma = ir_dN_unc, absolute_sigma = True)
+#Excluding the last 4 data points as angles are getting larger than what is appropriate for small angle approximation.
+# ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading[:-4], ir_dN_Per_dx[:-4], p0=(1.68), sigma = ir_dN_unc[:-4], absolute_sigma = True)
 
-
-plt.errorbar(ir_reading, ir_dN_Per_dx, xerr=ir_reading_unc, color = "red", label = "Index of Refraction Measurement")
+plt.errorbar(ir_reading, ir_dN_Per_dx, xerr=ir_reading_unc, yerr=ir_dN_unc, color = "red", label = "Index of Refraction Measurement")
 plt.plot(ir_reading, index_refraction_2(ir_reading, *ir_popt), color = "blue", label = "Prediction")
-# plt.plot(np.arange(-30.0, 0.0, 0.5), index_refraction_2(np.arange(-30.0, 0.0, 0.5), 1.015, -30.0), color = "blue")
-# plt.plot(ir_reading, index_refraction_2(ir_reading, 1+1.5e-4), color = "blue")
-#plt.plot(ir_reading, index_refraction_2(ir_reading, 1.73), color = "blue")
-
+plt.xlabel("Change in unit of radians (rad)")
+plt.ylabel("Change in unit of fringe count")
+plt.title("Index of Refraction Prediction (change in plastic square rotation in rad versus change in fringe count)")
 plt.legend()
-
+plt.show()
 
 print("Predicted Index of Refraction: n = ", ir_popt[0], " ± ", np.sqrt(ir_pcov[0][0]))
 
-#ir_std = np.sqrt(np.sum((ir_reading-np.mean(ir_reading))**2)/ir_reading.size)
-#position_std += reading_unc*2.0
-#position_std = reading_unc
-ir_reduced_chi2 = np.sum((ir_reading-index_refraction_2(ir_reading, *ir_popt))**2/(ir_dN_unc**2)) /(ir_reading.size - ir_popt.size)
+#Reduced Chi Squared Value
+ir_prediction = index_refraction_2(ir_reading, *ir_popt)
+ir_reduced_chi2 = np.sum((ir_reading-ir_prediction)**2/(ir_dN_unc**2)) /(ir_reading.size - ir_popt.size)
 print ("The Reduced Chi Square Value is: ", ir_reduced_chi2)
 
 
