@@ -82,12 +82,16 @@ thickness = 7e-3 #mm converted to m
 
 
 ir_reading*=-1.0
+ir_reading-=ir_reading[0]
+ir_reading = np.radians(ir_reading)
 
+ir_reading_unc = np.radians(ir_reading_unc)
 # ir_reading=ir_reading[::-1]
 # ir_dN_Per_dx=ir_dN_Per_dx[::-1]
 # ir_dN_unc = ir_dN_unc[::-1]
 # ir_reading_unc = ir_reading_unc[::-1]
 
+ir_dN_unc[0]=0.1
 ir_dN_unc_old = np.array(ir_dN_unc)
 #dN Uncertainty propagation
 for u in range(1, len(ir_dN_unc)):
@@ -101,21 +105,31 @@ for u in range(1, len(ir_dN_unc)):
 #     return (((x_val*gamma/(2.0*a))+np.cos(b)-1)**2 + np.sin(b)**2)/(2.0*(1.0-np.cos(b)-(x_val*gamma/(2.0*a))))
 
 
-def index_refraction_2(x_val, a, b):
-    #return (thickness/cf_popt[0])*((x_val-b)**2)*(1.0-(1.0/a))
-    return (thickness/gamma)*((x_val-b)**2)*(1.0-(1.0/a))
+def index_refraction_2(x_val, a):
+    return (thickness/(cf_popt[0]*1e-6))*((x_val)**2)*(1.0-(1.0/a))
+    #return (thickness/gamma)*((x_val)**2)*(1.0-(1.0/a))
 
 # ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading[1:], ir_dN_Per_dx[1:], sigma = np.ones(ir_reading[1:].size)*0.5, absolute_sigma = True)
-#ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading, ir_dN_Per_dx, p0=(1.5, -30.0),sigma = ir_dN_unc, absolute_sigma = True, maxfev = 100000)
+#ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading, ir_dN_Per_dx, p0=(1.5),sigma = ir_dN_unc, absolute_sigma = True, maxfev = 100000)
+ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading, ir_dN_Per_dx, p0=(1.68), sigma = ir_dN_unc, absolute_sigma = True)
 
 
-plt.errorbar(ir_reading, ir_dN_Per_dx, xerr=ir_min_unc*0.01, color = "red", label = "Index of Refraction Measurement")
-#plt.plot(ir_reading, index_refraction_2(ir_reading, *ir_popt), color = "blue", label = "Prediction")
+plt.errorbar(ir_reading, ir_dN_Per_dx, xerr=ir_reading_unc, color = "red", label = "Index of Refraction Measurement")
+plt.plot(ir_reading, index_refraction_2(ir_reading, *ir_popt), color = "blue", label = "Prediction")
 # plt.plot(np.arange(-30.0, 0.0, 0.5), index_refraction_2(np.arange(-30.0, 0.0, 0.5), 1.015, -30.0), color = "blue")
-plt.plot(ir_reading, index_refraction_2(ir_reading, 1+1.5e-4, -30.0), color = "blue")
+# plt.plot(ir_reading, index_refraction_2(ir_reading, 1+1.5e-4), color = "blue")
+#plt.plot(ir_reading, index_refraction_2(ir_reading, 1.73), color = "blue")
 
 plt.legend()
 
+
+print("Predicted Index of Refraction: n = ", ir_popt[0], " ± ", np.sqrt(ir_pcov[0][0]))
+
+#ir_std = np.sqrt(np.sum((ir_reading-np.mean(ir_reading))**2)/ir_reading.size)
+#position_std += reading_unc*2.0
+#position_std = reading_unc
+ir_reduced_chi2 = np.sum((ir_reading-index_refraction_2(ir_reading, *ir_popt))**2/(ir_dN_unc**2)) /(ir_reading.size - ir_popt.size)
+print ("The Reduced Chi Square Value is: ", ir_reduced_chi2)
 
 
 ###################### Thermal Expansion of Aluminium ################################
