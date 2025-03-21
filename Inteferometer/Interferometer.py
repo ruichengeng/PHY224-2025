@@ -37,6 +37,7 @@ w_popt, w_pcov = curve_fit(deltaN, w_reading, w_dN_Per_dx, p0=(0.57), sigma=w_dN
 #Plotting
 plt.errorbar(w_reading, w_dN_Per_dx, xerr=w_reading_unc, yerr=w_dN_unc, label = "Measured Data")
 plt.plot(w_reading, deltaN(w_reading, *w_popt), color = "red", label="Prediction Data")
+plt.plot(w_reading, w_reading*2.0/(532e-3), color = "black", label="Theoretical Prediction")
 plt.xlabel("Change in unit of micrometer (µm)")
 plt.ylabel("Change in unit of fringe count")
 plt.title("Wavelength Prediction (change in mirror distance in µm versus change in fringe count)")
@@ -88,7 +89,8 @@ for u in range(1, len(ir_dN_unc)):
 #Prediction Model
 #Index of Refraction
 def index_refraction_2(x_val, a):
-    return (thickness/(w_popt[0]*1e-6))*((x_val)**2)*(1.0-(1.0/a))
+    # return (thickness/(w_popt[0]*1e-6))*((x_val)**2)*(1.0-(1.0/a))
+    return (thickness/(0.534*1e-6))*((x_val)**2)*(1.0-(1.0/a))
 
 ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading, ir_dN_Per_dx, p0=(1.68), sigma = ir_dN_unc, absolute_sigma = True)
 #Excluding the last 4 data points as angles are getting larger than what is appropriate for small angle approximation.
@@ -113,12 +115,37 @@ print ("The Reduced Chi Square Value is: ", ir_reduced_chi2)
 ###################### Thermal Expansion of Aluminium ################################
 
 #Reading Data
-
+t_temp, t_dN, t_current, t_temp_cool, t_dN_cool, t_current_cool = np.loadtxt("Thermal_Expansion_Data.csv", 
+                                                  delimiter = ',', 
+                                                  skiprows=1, unpack=True)
 
 #Variables
-L0=1.0 #Temp, length at base temperature
+L0=0.09012 #Temp, length at base temperature
+
 
 #Prediction Model
 #Thermal Expansion
+# def thermal_expansion(x_val, a):
+#     return L0*np.exp()**(a*x_val)
+
 def thermal_expansion(x_val, a):
-    return L0*np.exp()**(a*x_val)
+    # return (2.0*L0/(0.534e-6))*a*(x_val-t_temp[0])
+    return (2.0*L0/(w_popt[0]*1e-6))*a*(x_val-t_temp[0])
+
+
+t_dN_total = np.zeros(t_dN.size)
+t_dN_total[0]=t_dN[0]
+for n in range(1, len(t_dN)):
+    t_dN_total[n]=t_dN[n]+t_dN_total[n-1]
+    
+    
+
+t_popt, t_pcov = curve_fit(thermal_expansion, t_temp, t_dN_total, p0=(29.33790993115546746e-06))
+
+plt.errorbar(t_temp, t_dN_total, fmt="o", color = "red", label = "Measurement Data")
+# plt.plot(t_temp, thermal_expansion(t_temp, 23e-6), color = "blue", label = "Prediction")
+plt.plot(t_temp, thermal_expansion(t_temp, *t_popt), color = "blue", label = "Prediction")
+
+plt.legend()
+
+print("Predicted thermal expansion coefficient for aluminium: ", t_popt[0], "/C")
