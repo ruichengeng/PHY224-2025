@@ -115,7 +115,7 @@ print ("The Reduced Chi Square Value is: ", ir_reduced_chi2)
 ###################### Thermal Expansion of Aluminium ################################
 
 #Reading Data
-t_temp, t_dN, t_current, t_temp_cool, t_dN_cool, t_current_cool = np.loadtxt("Thermal_Expansion_Data.csv", 
+t_temp, t_dN, t_current = np.loadtxt("Thermal_Expansion_Data.csv", 
                                                   delimiter = ',', 
                                                   skiprows=1, unpack=True)
 
@@ -149,3 +149,4 @@ plt.plot(t_temp, thermal_expansion(t_temp, *t_popt), color = "blue", label = "Pr
 plt.legend()
 
 print("Predicted thermal expansion coefficient for aluminium: ", t_popt[0], "/C")
+print("Predicted thermal expansion coefficient for aluminium: ", 2.0*L0/(w_popt[0]*1e-6)*t_popt[0], "/C")
