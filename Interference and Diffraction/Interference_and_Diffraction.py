@@ -79,7 +79,10 @@ def Run_Slits_Models(position, intensity, pos_unc, intensity_unc, a, d):
             max_intensity = intensity[i]
             max_position = position[i]
     
-    #Prediction Models
+    print("Max Position = ", max_position, "m")
+    print("Max Intensity = ", max_intensity, "V")
+    
+    #Prediction Model
     def double_slit_model(x_val, a, b, c, d):
         #theta = np.arcsin(wavelength / a)
         sin_theta = (x_val - max_position)/(np.sqrt(wheel_sensor_dist**2 + (x_val - max_position)**2))
@@ -94,16 +97,17 @@ def Run_Slits_Models(position, intensity, pos_unc, intensity_unc, a, d):
         return d*max_intensity * (single_slit * double_slit) - c* offset_slit
     
     
-    
+    #Curve Fitting to the measurement data based on the model above
     popt, pcov = curve_fit(double_slit_model, position, intensity, p0=(a, d, max_intensity, 0.5), sigma=intensity_unc, absolute_sigma = True)
     
-    
+    #Printing out the fitted parameters and their uncertainties
     print("Number of predicted fringes: ", popt[1]/popt[0])
     print("a value (predicted slit width) is: ", popt[0], " ± ", np.sqrt(pcov[0][0]))
     print("b value (predicted slit separation) is: ", popt[1], " ± ", np.sqrt(pcov[1][1]))
     print("c value (predicted offset scalar value) is: ", popt[2], " ± ", np.sqrt(pcov[2][2]))
     print("d value (predicted maximum intensity scalar) is: ", popt[3], " ± ", np.sqrt(pcov[3][3]))
     
+    #Plotting the first figure over the entire domain
     plt.figure(figsize=(12, 6))
     plt.errorbar(position, intensity, xerr=pos_unc, yerr=intensity_unc, fmt='o', color = "red", label = "Measured Data", markersize=1)
     plt.plot(position, double_slit_model(position, *popt), color = "blue", label = "Model Data")
@@ -135,6 +139,7 @@ def Run_Slits_Models(position, intensity, pos_unc, intensity_unc, a, d):
     #Definition of residual = difference between measured and prediction data
     residual = intensity - double_slit_Prediction
     
+    #Plotting the residuals
     plt.figure(figsize=(12, 6))    
     plt.plot(position, np.zeros(position.size), color = "blue", label = "Zero Residual Line")
     plt.errorbar(position, residual, xerr=pos_unc, yerr=intensity_unc, fmt ='o', color = "red", label = "Model Residual", markersize=1)
