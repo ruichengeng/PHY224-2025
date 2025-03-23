@@ -22,7 +22,7 @@ thermal_coefficient_theo = 23e-6 #Coefficient of thermal expansion of aluminium 
 
 
 #Data imports
-w_reading, w_dN, w_reading_unc, w_dN_unc = np.loadtxt("Final_Wavelength_data - Copy.csv", 
+w_reading, w_dN, w_reading_unc, w_dN_unc = np.loadtxt("Final_Wavelength_data.csv", 
                                                   delimiter = ',', 
                                                   skiprows=1, unpack=True)
 
@@ -67,12 +67,13 @@ plt.show()
 #Printing the predicted wavelength
 print("Predicted Wavelength = ", w_popt[0]*1000.0, "nm ± ", np.sqrt(w_pcov[0][0])*1000.0, "nm")
 
-w_std = np.sqrt(np.sum((w_reading-np.mean(w_reading))**2)/w_reading.size)
+w_std = np.sqrt(np.sum((w_reading-np.mean(w_reading))**2)/(w_reading.size-1))
 reduced_chi2 = np.sum((w_reading-deltaN(w_reading, *w_popt))**2/w_std**2) /(w_reading.size - w_popt.size)
 print ("The Reduced Chi Square Value is: ", reduced_chi2)
 
-reduced_chi2 = np.sum((w_reading-deltaN(w_reading, 0.57)-10.0)**2/w_std**2) /(w_reading.size - w_popt.size)
+reduced_chi2 = np.sum((w_reading-deltaN(w_reading, *w_popt))**2/w_dN_unc**2) /(w_reading.size - w_popt.size)
 print ("The Reduced Chi Square Value is: ", reduced_chi2)
+
 ###################### Index of Refraction ################################
 
 #Reading Data
