@@ -33,7 +33,7 @@ w_reading_u, w_dN_u, w_reading_unc_u, w_dN_unc_u = np.loadtxt("Final_Wavelength_
 
 #Prediction Model
 #Wavelength
-def deltaN(x_val, a):
+def deltaN_model(x_val, a):
     return x_val*(2.0/a)
 
 #Obtaining the total change in fringe counts at the specific measuring point
@@ -53,17 +53,17 @@ for n in range(1, len(w_dN_u)):
     w_dN_total_u[n]=w_dN_u[n]+w_dN_total_u[n-1]
     
 #Curve_fit
-w_popt, w_pcov = curve_fit(deltaN, w_reading, w_dN_total, p0=(0.57), sigma=w_dN_unc, absolute_sigma = True)
+w_popt, w_pcov = curve_fit(deltaN_model, w_reading, w_dN_total, p0=(0.57), sigma=w_dN_unc, absolute_sigma = True)
 
 #Curve_fit the unfixed data
-w_u_popt, w_u_pcov = curve_fit(deltaN, w_reading_u, w_dN_total_u, p0=(0.57), sigma=w_dN_unc_u, absolute_sigma = True)
+w_u_popt, w_u_pcov = curve_fit(deltaN_model, w_reading_u, w_dN_total_u, p0=(0.57), sigma=w_dN_unc_u, absolute_sigma = True)
 
 #Plotting
 plt.figure(figsize = (12, 4))
 #Unfixed dataset
 plt.subplot(1, 2, 1)
 plt.errorbar(w_reading_u, w_dN_total_u, xerr=w_reading_unc_u, yerr=w_dN_unc_u, fmt = "o", color = "red", label = "Measured Data")
-plt.plot(w_reading_u, deltaN(w_reading_u, *w_u_popt), color = "blue", label="Prediction Data")
+plt.plot(w_reading_u, deltaN_model(w_reading_u, *w_u_popt), color = "blue", label="Prediction Data")
 plt.plot(w_reading_u, w_reading_u*2.0/(wavelength_theo*1e6), color = "green", label="Theoretical Prediction")
 plt.xlabel("Change in unit of micrometer (µm)")
 plt.ylabel("Change in unit of fringe count")
@@ -72,7 +72,7 @@ plt.legend()
 #Fixed dataset
 plt.subplot(1, 2, 2)
 plt.errorbar(w_reading, w_dN_total, xerr=w_reading_unc, yerr=w_dN_unc, fmt = "o", color = "red", label = "Measured Data")
-plt.plot(w_reading, deltaN(w_reading, *w_popt), color = "blue", label="Prediction Data")
+plt.plot(w_reading, deltaN_model(w_reading, *w_popt), color = "blue", label="Prediction Data")
 plt.plot(w_reading, w_reading*2.0/(wavelength_theo*1e6), color = "green", label="Theoretical Prediction")
 plt.xlabel("Change in unit of micrometer (µm)")
 plt.ylabel("Change in unit of fringe count")
@@ -81,7 +81,7 @@ plt.legend()
 plt.show()
 
 #Residuals
-w_residual = w_dN_total - deltaN(w_reading, *w_popt)
+w_residual = w_dN_total - deltaN_model(w_reading, *w_popt)
 w_zero_line = np.zeros(w_residual.size)
 plt.plot(w_reading, w_zero_line, color = "blue", label = "Reference zero residual line")
 plt.errorbar(w_reading, w_residual, xerr=w_reading_unc, yerr=w_dN_unc, color = "red", fmt = "o", label = "Residual between measurement and prediction")
@@ -95,10 +95,10 @@ plt.show()
 print("Predicted Wavelength = ", w_popt[0]*1000.0, "nm ± ", np.sqrt(w_pcov[0][0])*1000.0, "nm")
 
 w_std = np.sqrt(np.sum((w_reading-np.mean(w_reading))**2)/(w_reading.size-1))
-reduced_chi2 = np.sum((w_reading-deltaN(w_reading, *w_popt))**2/w_std**2) /(w_reading.size - w_popt.size)
+reduced_chi2 = np.sum((w_residual)**2/w_std**2) /(w_reading.size - w_popt.size)
 print ("The Reduced Chi Square Value is: ", reduced_chi2)
 
-reduced_chi2 = np.sum((w_reading-deltaN(w_reading, *w_popt))**2/w_dN_unc**2) /(w_reading.size - w_popt.size)
+reduced_chi2 = np.sum((w_residual)**2/w_dN_unc**2) /(w_reading.size - w_popt.size)
 print ("The Reduced Chi Square Value is: ", reduced_chi2)
 
 ###################### Index of Refraction ################################
@@ -136,16 +136,16 @@ for u in range(1, len(ir_dN_unc)):
 
 #Prediction Model
 #Index of Refraction
-def index_refraction_2(x_val, a):
+def index_refraction_model(x_val, a):
     return (thickness/(w_popt[0]*1e-6))*((x_val)**2)*(1.0-(1.0/a))
     #return (thickness/(0.534*1e-6))*((x_val)**2)*(1.0-(1.0/a))
 
-ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading, ir_dN_total, p0=(1.68), sigma = ir_dN_unc, absolute_sigma = True)
+ir_popt, ir_pcov = curve_fit(index_refraction_model, ir_reading, ir_dN_total, p0=(1.68), sigma = ir_dN_unc, absolute_sigma = True)
 #Excluding the last 4 data points as angles are getting larger than what is appropriate for small angle approximation.
 # ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading[:-4], ir_dN_Per_dx[:-4], p0=(1.68), sigma = ir_dN_unc[:-4], absolute_sigma = True)
 
 plt.errorbar(ir_reading, ir_dN_total, xerr=ir_reading_unc, yerr=ir_dN_unc, fmt = "o", color = "red", label = "Index of Refraction Measurement")
-plt.plot(ir_reading, index_refraction_2(ir_reading, *ir_popt), color = "blue", label = "Prediction")
+plt.plot(ir_reading, index_refraction_model(ir_reading, *ir_popt), color = "blue", label = "Prediction")
 plt.fill_between(ir_reading, (thickness/(0.534*1e-6))*((ir_reading)**2)*(1.0-(1.0/1.4)), (thickness/(0.534*1e-6))*((ir_reading)**2)*(1.0-(1.0/1.76)), color='green', alpha=0.35, interpolate=True, label = "Theoretical Prediction Range")
 plt.xlabel("Change in unit of radians (rad)")
 plt.ylabel("Change in unit of fringe count")
@@ -154,7 +154,7 @@ plt.legend()
 plt.show()
 
 #Residuals
-ir_residual = ir_dN_total - index_refraction_2(ir_reading, *ir_popt)
+ir_residual = ir_dN_total - index_refraction_model(ir_reading, *ir_popt)
 ir_zero_line = np.zeros(ir_residual.size)
 plt.plot(ir_reading, ir_zero_line, color = "blue", label = "Reference zero residual line")
 plt.errorbar(ir_reading, ir_residual, xerr=ir_reading_unc, yerr=ir_dN_unc, color = "red", fmt = "o", label = "Residual between measurement and prediction")
@@ -167,8 +167,7 @@ plt.show()
 print("Predicted Index of Refraction: n = ", ir_popt[0], " ± ", np.sqrt(ir_pcov[0][0]))
 
 #Reduced Chi Squared Value
-ir_prediction = index_refraction_2(ir_reading, *ir_popt)
-ir_reduced_chi2 = np.sum((ir_reading-ir_prediction)**2/(ir_dN_unc**2)) /(ir_reading.size - ir_popt.size)
+ir_reduced_chi2 = np.sum((ir_residual)**2/(ir_dN_unc**2)) /(ir_reading.size - ir_popt.size)
 print ("The Reduced Chi Square Value is: ", ir_reduced_chi2)
 
 
@@ -188,7 +187,7 @@ L0=0.09012 #Aluminium rod length at base temperature
 # def thermal_expansion(x_val, a):
 #     return L0*np.exp()**(a*x_val)
 
-def thermal_expansion(x_val, a):
+def thermal_expansion_model(x_val, a):
     # return (2.0*L0/(0.534e-6))*a*(x_val-t_temp[0])
     return (2.0*L0/(w_popt[0]*1e-6))*a*(x_val-t_temp[0])
 
@@ -200,10 +199,10 @@ for n in range(1, len(t_dN)):
     
     
 
-t_popt, t_pcov = curve_fit(thermal_expansion, t_temp, t_dN_total, p0=(29.33790993115546746e-06))
+t_popt, t_pcov = curve_fit(thermal_expansion_model, t_temp, t_dN_total, p0=(29.33790993115546746e-06))
 
 plt.errorbar(t_temp, t_dN_total, fmt="o", color = "red", label = "Measurement Data")
-plt.plot(t_temp, thermal_expansion(t_temp, *t_popt), color = "blue", label = "Prediction")
+plt.plot(t_temp, thermal_expansion_model(t_temp, *t_popt), color = "blue", label = "Prediction")
 plt.plot(t_temp, (2.0*L0/(wavelength_theo))*thermal_coefficient_theo*(t_temp-t_temp[0]), color = "green", label = "Theoretical Prediction")
 plt.xlabel("Temperature in degrees Celsius (C)")
 plt.ylabel("Change in unit of fringe counts")
@@ -212,7 +211,7 @@ plt.legend()
 plt.show()
 
 #Residuals
-t_residual = t_dN_total - thermal_expansion(t_temp, *t_popt)
+t_residual = t_dN_total - thermal_expansion_model(t_temp, *t_popt)
 t_zero_line = np.zeros(t_residual.size)
 plt.plot(t_temp, t_zero_line, color = "blue", label = "Reference zero residual line")
 plt.errorbar(t_temp, t_residual, color = "red", fmt = "o", label = "Residual between measurement and prediction")
