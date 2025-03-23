@@ -56,12 +56,17 @@ for n in range(1, len(w_dN_u)):
 for w in range(1, len(w_dN_unc_u)):
     w_dN_unc_u[w]=np.sqrt((w_dN_unc_u[w-1]**2) + (w_dN_unc_u[w]**2))
 
-    
 #Curve_fit
 w_popt, w_pcov = curve_fit(deltaN_model, w_reading, w_dN_total, p0=(0.57), sigma=w_dN_unc, absolute_sigma = True)
 
 #Curve_fit the unfixed data
 w_u_popt, w_u_pcov = curve_fit(deltaN_model, w_reading_u, w_dN_total_u, p0=(0.57), sigma=w_dN_unc_u, absolute_sigma = True)
+
+#Propagating Model Uncertainty
+# wave_model_unc_pt1 = (w_reading/w_popt[0])*np.sqrt((w_reading_unc/w_reading)**2 + ((np.sqrt(w_pcov[0][0]))/w_popt[0])**2)
+wave_model_unc_pt1 = 2.0*w_reading_unc
+wave_model_unc = deltaN_model(w_reading, *w_popt)*np.sqrt((np.sqrt(w_pcov[0][0])/w_popt[0])**2 + (wave_model_unc_pt1/(2.0*w_reading))**2)
+w_unc_total = np.sqrt(w_dN_unc**2 + wave_model_unc**2)
 
 #Plotting
 plt.figure(figsize = (12, 4))
@@ -89,7 +94,7 @@ plt.show()
 w_residual = w_dN_total - deltaN_model(w_reading, *w_popt)
 w_zero_line = np.zeros(w_residual.size)
 plt.plot(w_reading, w_zero_line, color = "blue", label = "Reference zero residual line")
-plt.errorbar(w_reading, w_residual, xerr=w_reading_unc, yerr=w_dN_unc, color = "red", fmt = "o", label = "Residual between measurement and prediction", markersize = 0.5)
+plt.errorbar(w_reading, w_residual, xerr=w_reading_unc, yerr=wave_model_unc, color = "red", fmt = "o", label = "Residual between measurement and prediction", markersize = 0.5)
 plt.xlabel("Change in unit of micrometer (µm)")
 plt.ylabel("Error in the fringe count")
 plt.title("Wavelength Residual between the measurement data and the prediction data")
@@ -99,12 +104,9 @@ plt.show()
 #Printing the predicted wavelength
 print("Predicted Wavelength = ", w_popt[0]*1000.0, "nm ± ", np.sqrt(w_pcov[0][0])*1000.0, "nm")
 
-reduced_chi2 = np.sum((w_residual)**2/w_dN_unc**2) /(w_reading.size - w_popt.size)
-print ("The Reduced Chi Square Value is: ", reduced_chi2)
-
-w_std = np.sqrt(np.sum((w_reading-np.mean(w_reading))**2)/w_reading.size)
-reduced_chi2 = np.sum((w_reading-deltaN_model(w_reading, *w_popt))**2/w_std**2) /(w_reading.size - w_popt.size)
-print ("The Reduced Chi Square Value is: ", reduced_chi2)
+#Reduced Chi Square
+reduced_chi2 = np.sum((w_residual)**2/w_unc_total**2) /(w_residual.size - w_popt.size)
+print ("The Reduced Chi Square Value For Wavelength Prediction is: ", reduced_chi2)
 
 ###################### Index of Refraction ################################
 
@@ -123,12 +125,16 @@ ir_reading += ir_min/60.0
 ir_reading_unc = ir_min_unc/60.0
 
 #Variables
-thickness = 7e-3 #mm converted to m
+thickness = 7.70e-3 #mm converted to m
+thickness_unc = 0.03e-3
 
 ir_reading*=-1.0
 ir_reading-=ir_reading[0]
 ir_reading = np.radians(ir_reading)
+ir_reading[0]=1e-9
 ir_reading_unc = np.radians(ir_reading_unc)
+for u in range(1, len(ir_dN_unc)):
+    ir_reading_unc[u]=np.sqrt((ir_reading_unc[0]**2) + (ir_reading_unc[u]**2))
 
 ir_dN_unc[0]=0.1
 ir_dN_unc_old = np.array(ir_dN_unc)
@@ -140,7 +146,6 @@ for u in range(1, len(ir_dN_unc)):
 #Index of Refraction
 def index_refraction_model(x_val, a):
     return (thickness/(w_popt[0]*1e-6))*((x_val)**2)*(1.0-(1.0/a))
-    #return (thickness/(0.534*1e-6))*((x_val)**2)*(1.0-(1.0/a))
 
 ir_popt, ir_pcov = curve_fit(index_refraction_model, ir_reading, ir_dN_total, p0=(1.68), sigma = ir_dN_unc, absolute_sigma = True)
 #Excluding the last 4 data points as angles are getting larger than what is appropriate for small angle approximation.
@@ -155,11 +160,21 @@ plt.title("Index of Refraction Prediction (change in plastic square rotation in 
 plt.legend()
 plt.show()
 
+#Uncertainty Propagation
+ir_f_pt1 = (thickness/(w_popt[0]*1e-6))
+ir_unc_pt1 = ir_f_pt1*np.sqrt((thickness_unc/thickness)**2 + (np.sqrt(w_pcov[0][0])/w_popt[0])**2)
+ir_f_pt2 = ((ir_reading)**2)
+ir_unc_pt2 = ir_f_pt2*2.0*ir_reading_unc/ir_reading
+ir_unc_pt3 = ir_f_pt1*ir_f_pt2*np.sqrt((ir_unc_pt1/ir_f_pt1)**2 + (ir_unc_pt2/ir_f_pt2)**2)
+ir_f_pt4 = (1.0-(1.0/ir_popt[0]))
+ir_unc_pt4 = np.sqrt(w_pcov[0][0])/(w_popt[0]**2)
+ir_model_unc = index_refraction_model(ir_reading, *ir_popt)*np.sqrt((ir_unc_pt3/(ir_f_pt1*ir_f_pt2))**2 + (ir_unc_pt4/ir_f_pt4)**2)
+
 #Residuals
 ir_residual = ir_dN_total - index_refraction_model(ir_reading, *ir_popt)
 ir_zero_line = np.zeros(ir_residual.size)
 plt.plot(ir_reading, ir_zero_line, color = "blue", label = "Reference zero residual line")
-plt.errorbar(ir_reading, ir_residual, xerr=ir_reading_unc, yerr=ir_dN_unc, color = "red", fmt = "o", label = "Residual between measurement and prediction", markersize = 0.5)
+plt.errorbar(ir_reading, ir_residual, xerr=ir_reading_unc, yerr=ir_model_unc, color = "red", fmt = "o", label = "Residual between measurement and prediction", markersize = 0.5)
 plt.xlabel("Change in unit of radians (rad)")
 plt.ylabel("Error in the fringe count")
 plt.title("Index of Refraction Residual between the measurement data and the prediction data")
@@ -169,8 +184,9 @@ plt.show()
 print("Predicted Index of Refraction: n = ", ir_popt[0], " ± ", np.sqrt(ir_pcov[0][0]))
 
 #Reduced Chi Squared Value
-ir_reduced_chi2 = np.sum((ir_residual)**2/(ir_reading_unc**2)) /(ir_reading.size - ir_popt.size)
-print ("The Reduced Chi Square Value is: ", ir_reduced_chi2)
+ir_total_unc = np.sqrt((ir_model_unc)**2 + (ir_dN_unc)**2)
+ir_reduced_chi2 = np.sum((ir_residual)**2/(ir_total_unc**2)) /(ir_residual.size - ir_popt.size)
+print ("The Reduced Chi Square Value For Index of Refraction Prediction is: ", ir_reduced_chi2)
 
 
 ###################### Thermal Expansion of Aluminium ################################
@@ -182,10 +198,10 @@ t_temp, t_dN, t_current, t_temp_unc, t_dN_unc = np.loadtxt("Thermal_Expansion_Da
 
 #Variables
 L0=0.09012 #Aluminium rod length at base temperature
+L0_unc= 0.00002
 
 #Prediction Model
 def thermal_expansion_model(x_val, a):
-    # return (2.0*L0/(0.534e-6))*a*(x_val-t_temp[0])
     return (2.0*L0/(w_popt[0]*1e-6))*a*(x_val-t_temp[0])
 
 
@@ -209,11 +225,20 @@ plt.title("Thermal Coefficient of Aluminium Prediction")
 plt.legend()
 plt.show()
 
+#Model Uncertainty Propagation
+t_f_pt1 = (2.0*L0/(w_popt[0]*1e-6))
+t_unc_pt1 = t_f_pt1*np.sqrt((L0_unc/L0)**2 + (np.sqrt(w_pcov[0][0])/w_popt[0])**2)
+t_f_pt2 = (t_temp-t_temp[0])
+t_f_pt2[0]=1e-9
+t_unc_pt2 = np.sqrt(t_temp_unc**2 + t_temp_unc[0]**2)
+t_model_unc = thermal_expansion_model(t_temp, *t_popt)*np.sqrt((t_unc_pt1/t_f_pt1)**2 + (t_unc_pt2/t_f_pt2)**2 + (np.sqrt(t_pcov[0][0])/t_popt[0])**2)
+t_model_unc[0]=1e-9
+
 #Residuals
 t_residual = t_dN_total - thermal_expansion_model(t_temp, *t_popt)
 t_zero_line = np.zeros(t_residual.size)
 plt.plot(t_temp, t_zero_line, color = "blue", label = "Reference zero residual line")
-plt.errorbar(t_temp, t_residual, xerr=t_temp_unc, yerr = t_dN_unc, color = "red", fmt = "o", label = "Residual between measurement and prediction", markersize = 0.5)
+plt.errorbar(t_temp, t_residual, xerr=t_temp_unc, yerr = t_model_unc, color = "red", fmt = "o", label = "Residual between measurement and prediction", markersize = 0.5)
 plt.xlabel("Temperature in degrees Celsius (C)")
 plt.ylabel("Error in the fringe count")
 plt.title("Thermal Coefficient Residual between the measurement data and the prediction data")
@@ -224,8 +249,8 @@ print("Predicted thermal expansion coefficient for aluminium: ", t_popt[0], "/C"
 
 #Reduced Chi Squared Value
 t_prediction = thermal_expansion_model(t_temp, *t_popt)
-t_reduced_chi2 = np.sum((t_temp-t_prediction)**2/(t_dN_unc**2)) /(t_temp.size - t_popt.size)
-print ("The Reduced Chi Square Value is: ", t_reduced_chi2)
+t_reduced_chi2 = np.sum((t_residual)**2/(t_model_unc**2)) /(t_residual.size - t_popt.size)
+print ("The Reduced Chi Square Value for Thermal Expansion Coefficient is: ", t_reduced_chi2)
 
 
 
