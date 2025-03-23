@@ -17,7 +17,7 @@ from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt 
 
 #Theoretical Values of certain variables
-wavelength_theo = 534e-9 #in unit of nano meters
+wavelength_theo = 532e-9 #in unit of nano meters
 thermal_coefficient_theo = 23e-6 #Coefficient of thermal expansion of aluminium per degrees celsius
 
 
@@ -158,7 +158,7 @@ ir_popt, ir_pcov = curve_fit(index_refraction_model, ir_reading, ir_dN_total, p0
 #Plotting the main plot
 plt.errorbar(ir_reading, ir_dN_total, xerr=ir_reading_unc, yerr=ir_dN_unc, fmt = "o", color = "red", label = "Index of Refraction Measurement", markersize = 0.5)
 plt.plot(ir_reading, index_refraction_model(ir_reading, *ir_popt), color = "blue", label = "Prediction")
-plt.fill_between(ir_reading, (thickness/(0.534*1e-6))*((ir_reading)**2)*(1.0-(1.0/1.4)), (thickness/(0.534*1e-6))*((ir_reading)**2)*(1.0-(1.0/1.7)), color='green', alpha=0.35, interpolate=True, label = "Theoretical Prediction Range (Upper: n=1.7, lower: n=1.4)")
+plt.fill_between(ir_reading, (thickness/(0.532*1e-6))*((ir_reading)**2)*(1.0-(1.0/1.4)), (thickness/(0.532*1e-6))*((ir_reading)**2)*(1.0-(1.0/1.7)), color='green', alpha=0.35, interpolate=True, label = "Theoretical Prediction Range (Upper: n=1.7, lower: n=1.4)")
 plt.xlabel("Change in rotation in unit of radians (rad)")
 plt.ylabel("Change in unit of fringe count")
 plt.title("Index of Refraction Prediction")
