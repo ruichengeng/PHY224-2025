@@ -44,8 +44,8 @@ w_popt, w_pcov = curve_fit(deltaN, w_reading, w_dN_Per_dx, p0=(0.57), sigma=w_dN
 
 #Plotting
 #Main Plot
-plt.errorbar(w_reading, w_dN_Per_dx, xerr=w_reading_unc, yerr=w_dN_unc, label = "Measured Data")
-plt.plot(w_reading, deltaN(w_reading, *w_popt), color = "red", label="Prediction Data")
+plt.errorbar(w_reading, w_dN_Per_dx, xerr=w_reading_unc, yerr=w_dN_unc, fmt = "o", color = "red", label = "Measured Data")
+plt.plot(w_reading, deltaN(w_reading, *w_popt), color = "blue", label="Prediction Data")
 plt.plot(w_reading, w_reading*2.0/(wavelength_theo*1e6), color = "green", label="Theoretical Prediction")
 plt.xlabel("Change in unit of micrometer (µm)")
 plt.ylabel("Change in unit of fringe count")
@@ -109,16 +109,16 @@ for u in range(1, len(ir_dN_unc)):
 #Prediction Model
 #Index of Refraction
 def index_refraction_2(x_val, a):
-    # return (thickness/(w_popt[0]*1e-6))*((x_val)**2)*(1.0-(1.0/a))
-    return (thickness/(0.534*1e-6))*((x_val)**2)*(1.0-(1.0/a))
+    return (thickness/(w_popt[0]*1e-6))*((x_val)**2)*(1.0-(1.0/a))
+    #return (thickness/(0.534*1e-6))*((x_val)**2)*(1.0-(1.0/a))
 
 ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading, ir_dN_Per_dx, p0=(1.68), sigma = ir_dN_unc, absolute_sigma = True)
 #Excluding the last 4 data points as angles are getting larger than what is appropriate for small angle approximation.
 # ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading[:-4], ir_dN_Per_dx[:-4], p0=(1.68), sigma = ir_dN_unc[:-4], absolute_sigma = True)
 
-plt.errorbar(ir_reading, ir_dN_Per_dx, xerr=ir_reading_unc, yerr=ir_dN_unc, color = "red", label = "Index of Refraction Measurement")
+plt.errorbar(ir_reading, ir_dN_Per_dx, xerr=ir_reading_unc, yerr=ir_dN_unc, fmt = "o", color = "red", label = "Index of Refraction Measurement")
 plt.plot(ir_reading, index_refraction_2(ir_reading, *ir_popt), color = "blue", label = "Prediction")
-plt.fill_between(ir_reading, index_refraction_2(ir_reading, 1.4), index_refraction_2(ir_reading, 1.7), color='green', alpha=0.35, interpolate=True, label = "Theoretical Prediction Range")
+plt.fill_between(ir_reading, (thickness/(0.534*1e-6))*((ir_reading)**2)*(1.0-(1.0/1.4)), (thickness/(0.534*1e-6))*((ir_reading)**2)*(1.0-(1.0/1.76)), color='green', alpha=0.35, interpolate=True, label = "Theoretical Prediction Range")
 plt.xlabel("Change in unit of radians (rad)")
 plt.ylabel("Change in unit of fringe count")
 plt.title("Index of Refraction Prediction (change in plastic square rotation in rad versus change in fringe count)")
@@ -176,7 +176,7 @@ t_popt, t_pcov = curve_fit(thermal_expansion, t_temp, t_dN_total, p0=(29.3379099
 
 plt.errorbar(t_temp, t_dN_total, fmt="o", color = "red", label = "Measurement Data")
 plt.plot(t_temp, thermal_expansion(t_temp, *t_popt), color = "blue", label = "Prediction")
-plt.plot(t_temp, thermal_expansion(t_temp, thermal_coefficient_theo), color = "green", label = "Theoretical Prediction")
+plt.plot(t_temp, (2.0*L0/(wavelength_theo))*thermal_coefficient_theo*(t_temp-t_temp[0]), color = "green", label = "Theoretical Prediction")
 plt.xlabel("Temperature in degrees Celsius (C)")
 plt.ylabel("Change in unit of fringe counts")
 plt.title("Thermal Coefficient of Aluminium Prediction")
@@ -194,5 +194,12 @@ plt.title("Thermal Coefficient Residual between the measurement data and the pre
 plt.legend()
 plt.show()
 
-print("Predicted thermal expansion coefficient for aluminium: ", t_popt[0], "/C")
-print("Predicted thermal expansion coefficient for aluminium: ", 2.0*L0/(w_popt[0]*1e-6)*t_popt[0], "/C")
+print("Predicted thermal expansion coefficient for aluminium: ", t_popt[0], "/C", " ± ", np.sqrt(t_pcov[0][0]), "/C")
+
+# #Reduced Chi Squared Value
+# t_prediction = thermal_expansion(t_temp, *t_popt)
+# t_reduced_chi2 = np.sum((t_temp-t_prediction)**2/(t_dN_unc**2)) /(t_temp.size - t_popt.size)
+# print ("The Reduced Chi Square Value is: ", t_reduced_chi2)
+
+
+
