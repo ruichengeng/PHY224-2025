@@ -30,17 +30,32 @@ w_dN_Per_dx = np.zeros(w_dN.size)
 w_dN_Per_dx[0]=w_reading[0]
 for n in range(1, len(w_dN)):
     w_dN_Per_dx[n]=w_dN[n]+w_dN_Per_dx[n-1]
+
+for w in range(1, len(w_dN_unc)):
+    w_dN_unc[w]=np.sqrt((w_dN_unc[w-1]**2) + (w_dN_unc[w]**2))
     
 #Curve_fit
 w_popt, w_pcov = curve_fit(deltaN, w_reading, w_dN_Per_dx, p0=(0.57), sigma=w_dN_unc, absolute_sigma = True)
 
 #Plotting
+#Main Plot
 plt.errorbar(w_reading, w_dN_Per_dx, xerr=w_reading_unc, yerr=w_dN_unc, label = "Measured Data")
 plt.plot(w_reading, deltaN(w_reading, *w_popt), color = "red", label="Prediction Data")
 plt.plot(w_reading, w_reading*2.0/(532e-3), color = "black", label="Theoretical Prediction")
 plt.xlabel("Change in unit of micrometer (µm)")
 plt.ylabel("Change in unit of fringe count")
 plt.title("Wavelength Prediction (change in mirror distance in µm versus change in fringe count)")
+plt.legend()
+plt.show()
+
+#Residuals
+w_residual = w_dN_Per_dx - deltaN(w_reading, *w_popt)
+w_zero_line = np.zeros(w_residual.size)
+plt.plot(w_reading, w_zero_line, color = "blue", label = "Reference zero residual line")
+plt.errorbar(w_reading, w_residual, xerr=w_reading_unc, yerr=w_dN_unc, color = "red", fmt = "o", label = "Residual between measurement and prediction")
+plt.xlabel("Change in unit of micrometer (µm)")
+plt.ylabel("Error in the fringe count")
+plt.title("Wavelength Residual between the measurement data and the prediction data")
 plt.legend()
 plt.show()
 
@@ -104,6 +119,17 @@ plt.title("Index of Refraction Prediction (change in plastic square rotation in 
 plt.legend()
 plt.show()
 
+#Residuals
+ir_residual = ir_dN_Per_dx - index_refraction_2(ir_reading, *ir_popt)
+ir_zero_line = np.zeros(ir_residual.size)
+plt.plot(ir_reading, ir_zero_line, color = "blue", label = "Reference zero residual line")
+plt.errorbar(ir_reading, ir_residual, xerr=ir_reading_unc, yerr=ir_dN_unc, color = "red", fmt = "o", label = "Residual between measurement and prediction")
+plt.xlabel("Change in unit of radians (rad)")
+plt.ylabel("Error in the fringe count")
+plt.title("Index of Refraction Residual between the measurement data and the prediction data")
+plt.legend()
+plt.show()
+
 print("Predicted Index of Refraction: n = ", ir_popt[0], " ± ", np.sqrt(ir_pcov[0][0]))
 
 #Reduced Chi Squared Value
@@ -115,12 +141,12 @@ print ("The Reduced Chi Square Value is: ", ir_reduced_chi2)
 ###################### Thermal Expansion of Aluminium ################################
 
 #Reading Data
-t_temp, t_dN, t_current = np.loadtxt("Thermal_Expansion_Data.csv", 
+t_temp, t_dN, t_current = np.loadtxt("Thermal_Expansion_Data_Combined.csv", 
                                                   delimiter = ',', 
                                                   skiprows=1, unpack=True)
 
 #Variables
-L0=0.09012 #Temp, length at base temperature
+L0=0.09012 #Aluminium rod length at base temperature
 
 
 #Prediction Model
@@ -143,10 +169,23 @@ for n in range(1, len(t_dN)):
 t_popt, t_pcov = curve_fit(thermal_expansion, t_temp, t_dN_total, p0=(29.33790993115546746e-06))
 
 plt.errorbar(t_temp, t_dN_total, fmt="o", color = "red", label = "Measurement Data")
-# plt.plot(t_temp, thermal_expansion(t_temp, 23e-6), color = "blue", label = "Prediction")
 plt.plot(t_temp, thermal_expansion(t_temp, *t_popt), color = "blue", label = "Prediction")
-
+plt.xlabel("Temperature in degrees Celsius (C)")
+plt.ylabel("Change in unit of fringe counts")
+plt.title("Thermal Coefficient of Aluminium Prediction")
 plt.legend()
+plt.show()
+
+#Residuals
+t_residual = t_dN_total - thermal_expansion(t_temp, *t_popt)
+t_zero_line = np.zeros(t_residual.size)
+plt.plot(t_temp, t_zero_line, color = "blue", label = "Reference zero residual line")
+plt.errorbar(t_temp, t_residual, color = "red", fmt = "o", label = "Residual between measurement and prediction")
+plt.xlabel("Temperature in degrees Celsius (C)")
+plt.ylabel("Error in the fringe count")
+plt.title("Thermal Coefficient Residual between the measurement data and the prediction data")
+plt.legend()
+plt.show()
 
 print("Predicted thermal expansion coefficient for aluminium: ", t_popt[0], "/C")
 print("Predicted thermal expansion coefficient for aluminium: ", 2.0*L0/(w_popt[0]*1e-6)*t_popt[0], "/C")
