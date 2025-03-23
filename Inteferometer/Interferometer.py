@@ -26,35 +26,62 @@ w_reading, w_dN, w_reading_unc, w_dN_unc = np.loadtxt("Final_Wavelength_data.csv
                                                   delimiter = ',', 
                                                   skiprows=1, unpack=True)
 
+#Data import of the unfixed data
+w_reading_u, w_dN_u, w_reading_unc_u, w_dN_unc_u = np.loadtxt("Final_Wavelength_data - Unfixed.csv", 
+                                                  delimiter = ',', 
+                                                  skiprows=1, unpack=True)
+
 #Prediction Model
 #Wavelength
 def deltaN(x_val, a):
     return x_val*(2.0/a)
 
-w_dN_Per_dx = np.zeros(w_dN.size)
-w_dN_Per_dx[0]=w_reading[0]
+#Obtaining the total change in fringe counts at the specific measuring point
+w_dN_total = np.zeros(w_dN.size)
+w_dN_total[0]=w_dN[0]
 for n in range(1, len(w_dN)):
-    w_dN_Per_dx[n]=w_dN[n]+w_dN_Per_dx[n-1]
-
+    w_dN_total[n]=w_dN[n]+w_dN_total[n-1]
+    
+#Calculating the fringe count uncertainty via propagation due to the addition above.
 for w in range(1, len(w_dN_unc)):
     w_dN_unc[w]=np.sqrt((w_dN_unc[w-1]**2) + (w_dN_unc[w]**2))
+
+#Obtaining the total change in fringe counts like above, but for the unfixed dataset
+w_dN_total_u = np.zeros(w_dN_u.size)
+w_dN_total_u[0]=w_dN_u[0]
+for n in range(1, len(w_dN_u)):
+    w_dN_total_u[n]=w_dN_u[n]+w_dN_total_u[n-1]
     
 #Curve_fit
-w_popt, w_pcov = curve_fit(deltaN, w_reading, w_dN_Per_dx, p0=(0.57), sigma=w_dN_unc, absolute_sigma = True)
+w_popt, w_pcov = curve_fit(deltaN, w_reading, w_dN_total, p0=(0.57), sigma=w_dN_unc, absolute_sigma = True)
+
+#Curve_fit the unfixed data
+w_u_popt, w_u_pcov = curve_fit(deltaN, w_reading_u, w_dN_total_u, p0=(0.57), sigma=w_dN_unc_u, absolute_sigma = True)
 
 #Plotting
-#Main Plot
-plt.errorbar(w_reading, w_dN_Per_dx, xerr=w_reading_unc, yerr=w_dN_unc, fmt = "o", color = "red", label = "Measured Data")
+plt.figure(figsize = (12, 4))
+#Unfixed dataset
+plt.subplot(1, 2, 1)
+plt.errorbar(w_reading_u, w_dN_total_u, xerr=w_reading_unc_u, yerr=w_dN_unc_u, fmt = "o", color = "red", label = "Measured Data")
+plt.plot(w_reading_u, deltaN(w_reading_u, *w_u_popt), color = "blue", label="Prediction Data")
+plt.plot(w_reading_u, w_reading_u*2.0/(wavelength_theo*1e6), color = "green", label="Theoretical Prediction")
+plt.xlabel("Change in unit of micrometer (µm)")
+plt.ylabel("Change in unit of fringe count")
+plt.title("Unfixed Data Wavelength Prediction")
+plt.legend()
+#Fixed dataset
+plt.subplot(1, 2, 2)
+plt.errorbar(w_reading, w_dN_total, xerr=w_reading_unc, yerr=w_dN_unc, fmt = "o", color = "red", label = "Measured Data")
 plt.plot(w_reading, deltaN(w_reading, *w_popt), color = "blue", label="Prediction Data")
 plt.plot(w_reading, w_reading*2.0/(wavelength_theo*1e6), color = "green", label="Theoretical Prediction")
 plt.xlabel("Change in unit of micrometer (µm)")
 plt.ylabel("Change in unit of fringe count")
-plt.title("Wavelength Prediction (change in mirror distance in µm versus change in fringe count)")
+plt.title("Fixed Data Wavelength Prediction")
 plt.legend()
 plt.show()
 
 #Residuals
-w_residual = w_dN_Per_dx - deltaN(w_reading, *w_popt)
+w_residual = w_dN_total - deltaN(w_reading, *w_popt)
 w_zero_line = np.zeros(w_residual.size)
 plt.plot(w_reading, w_zero_line, color = "blue", label = "Reference zero residual line")
 plt.errorbar(w_reading, w_residual, xerr=w_reading_unc, yerr=w_dN_unc, color = "red", fmt = "o", label = "Residual between measurement and prediction")
@@ -83,10 +110,10 @@ ir_reading, ir_min, ir_dN, ir_min_unc, ir_dN_unc = np.loadtxt("Index_of_Refracti
 
 # ir_dN=ir_dN[::-1]
 
-ir_dN_Per_dx = np.zeros(ir_dN.size)
-ir_dN_Per_dx[0]=ir_dN[0]
+ir_dN_total = np.zeros(ir_dN.size)
+ir_dN_total[0]=ir_dN[0]
 for n in range(1, len(ir_dN)):
-    ir_dN_Per_dx[n]=ir_dN[n]+ir_dN_Per_dx[n-1]
+    ir_dN_total[n]=ir_dN[n]+ir_dN_total[n-1]
 
 
 ir_reading += ir_min/60.0
@@ -113,11 +140,11 @@ def index_refraction_2(x_val, a):
     return (thickness/(w_popt[0]*1e-6))*((x_val)**2)*(1.0-(1.0/a))
     #return (thickness/(0.534*1e-6))*((x_val)**2)*(1.0-(1.0/a))
 
-ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading, ir_dN_Per_dx, p0=(1.68), sigma = ir_dN_unc, absolute_sigma = True)
+ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading, ir_dN_total, p0=(1.68), sigma = ir_dN_unc, absolute_sigma = True)
 #Excluding the last 4 data points as angles are getting larger than what is appropriate for small angle approximation.
 # ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading[:-4], ir_dN_Per_dx[:-4], p0=(1.68), sigma = ir_dN_unc[:-4], absolute_sigma = True)
 
-plt.errorbar(ir_reading, ir_dN_Per_dx, xerr=ir_reading_unc, yerr=ir_dN_unc, fmt = "o", color = "red", label = "Index of Refraction Measurement")
+plt.errorbar(ir_reading, ir_dN_total, xerr=ir_reading_unc, yerr=ir_dN_unc, fmt = "o", color = "red", label = "Index of Refraction Measurement")
 plt.plot(ir_reading, index_refraction_2(ir_reading, *ir_popt), color = "blue", label = "Prediction")
 plt.fill_between(ir_reading, (thickness/(0.534*1e-6))*((ir_reading)**2)*(1.0-(1.0/1.4)), (thickness/(0.534*1e-6))*((ir_reading)**2)*(1.0-(1.0/1.76)), color='green', alpha=0.35, interpolate=True, label = "Theoretical Prediction Range")
 plt.xlabel("Change in unit of radians (rad)")
@@ -127,7 +154,7 @@ plt.legend()
 plt.show()
 
 #Residuals
-ir_residual = ir_dN_Per_dx - index_refraction_2(ir_reading, *ir_popt)
+ir_residual = ir_dN_total - index_refraction_2(ir_reading, *ir_popt)
 ir_zero_line = np.zeros(ir_residual.size)
 plt.plot(ir_reading, ir_zero_line, color = "blue", label = "Reference zero residual line")
 plt.errorbar(ir_reading, ir_residual, xerr=ir_reading_unc, yerr=ir_dN_unc, color = "red", fmt = "o", label = "Residual between measurement and prediction")
