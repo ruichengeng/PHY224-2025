@@ -16,6 +16,11 @@ import scipy
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt 
 
+#Theoretical Values of certain variables
+wavelength_theo = 534e-9 #in unit of nano meters
+thermal_coefficient_theo = 23e-6 #Coefficient of thermal expansion of aluminium per degrees celsius
+
+
 #Data imports
 w_reading, w_dN, w_reading_unc, w_dN_unc = np.loadtxt("Final_Wavelength_data - Copy.csv", 
                                                   delimiter = ',', 
@@ -41,7 +46,7 @@ w_popt, w_pcov = curve_fit(deltaN, w_reading, w_dN_Per_dx, p0=(0.57), sigma=w_dN
 #Main Plot
 plt.errorbar(w_reading, w_dN_Per_dx, xerr=w_reading_unc, yerr=w_dN_unc, label = "Measured Data")
 plt.plot(w_reading, deltaN(w_reading, *w_popt), color = "red", label="Prediction Data")
-plt.plot(w_reading, w_reading*2.0/(532e-3), color = "black", label="Theoretical Prediction")
+plt.plot(w_reading, w_reading*2.0/(wavelength_theo*1e6), color = "green", label="Theoretical Prediction")
 plt.xlabel("Change in unit of micrometer (µm)")
 plt.ylabel("Change in unit of fringe count")
 plt.title("Wavelength Prediction (change in mirror distance in µm versus change in fringe count)")
@@ -113,6 +118,7 @@ ir_popt, ir_pcov = curve_fit(index_refraction_2, ir_reading, ir_dN_Per_dx, p0=(1
 
 plt.errorbar(ir_reading, ir_dN_Per_dx, xerr=ir_reading_unc, yerr=ir_dN_unc, color = "red", label = "Index of Refraction Measurement")
 plt.plot(ir_reading, index_refraction_2(ir_reading, *ir_popt), color = "blue", label = "Prediction")
+plt.fill_between(ir_reading, index_refraction_2(ir_reading, 1.4), index_refraction_2(ir_reading, 1.7), color='green', alpha=0.35, interpolate=True, label = "Theoretical Prediction Range")
 plt.xlabel("Change in unit of radians (rad)")
 plt.ylabel("Change in unit of fringe count")
 plt.title("Index of Refraction Prediction (change in plastic square rotation in rad versus change in fringe count)")
@@ -170,6 +176,7 @@ t_popt, t_pcov = curve_fit(thermal_expansion, t_temp, t_dN_total, p0=(29.3379099
 
 plt.errorbar(t_temp, t_dN_total, fmt="o", color = "red", label = "Measurement Data")
 plt.plot(t_temp, thermal_expansion(t_temp, *t_popt), color = "blue", label = "Prediction")
+plt.plot(t_temp, thermal_expansion(t_temp, thermal_coefficient_theo), color = "green", label = "Theoretical Prediction")
 plt.xlabel("Temperature in degrees Celsius (C)")
 plt.ylabel("Change in unit of fringe counts")
 plt.title("Thermal Coefficient of Aluminium Prediction")
