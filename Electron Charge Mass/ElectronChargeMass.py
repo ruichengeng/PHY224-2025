@@ -31,6 +31,12 @@ cc_current, cc_voltage, cc_ps_volt, cc_diameter = np.loadtxt("Constant_Current_d
                                                   skiprows=1, unpack=True)
 cc_current = np.abs(cc_current)
 
+#Eliminating the last point to correct for very small voltage
+cc_current = cc_current[:-1]
+cc_voltage = cc_voltage[:-1]
+cc_ps_volt = cc_ps_volt[:-1]
+cc_diameter = cc_diameter[:-1]
+
 #Constant Voltage data
 cv_current, cv_voltage, cv_ps_volt, cv_diameter = np.loadtxt("Constant_Voltage_data.csv", 
                                                   delimiter = ',', 
@@ -57,11 +63,11 @@ b_popt, b_pcov = curve_fit(magnetic_fit_model, cv_diameter/2.0, Bc)
 I0 = b_popt[1]/k_char
 
 #Constant Current Prediction Model
-def const_Current_model(x_val, a, b, c):
+def const_Current_model(x_val, a):
     return a*np.sqrt(x_val) #Returns r
 
 #Constant Voltage Prediction Model
-def const_Voltage_model(x_val, a, b):
+def const_Voltage_model(x_val, a):
     return a/(x_val+1.0/np.sqrt(2)*I0)
 
 #Curve fitting for the constant voltage
@@ -80,3 +86,14 @@ plt.errorbar(cv_current, (cv_diameter/2.0), color = "red", fmt = 'o')
 plt.plot(cv_current, const_Voltage_model(cv_current, *cv_popt), color = "green")
 plt.title("Constant Voltage")
 
+
+#Printing estimated charge to mass ratio
+#Via constant current
+cc_a_inv = 1.0/cc_popt[0]
+cc_a_inv /= (k_char*(I+ I0/np.sqrt(2)))
+print("Via constant current, the charge to mass ratio is: ", cc_a_inv**2, " C/kg")
+
+#Via constant voltage
+cv_a_inv = 1.0/cv_popt[0]
+cv_a_inv*=(np.sqrt(deltaV)/k_char)
+print("Via constant voltage, the charge to mass ratio is: ", cv_a_inv**2, " C/kg")
