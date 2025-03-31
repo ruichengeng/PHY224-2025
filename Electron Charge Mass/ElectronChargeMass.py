@@ -53,9 +53,14 @@ cv_current = np.abs(cv_current)
 deltaV = (np.max(cv_voltage)+np.min(cv_voltage))/2.0 #Used for constant voltage fitting, average of largest and lowest measured values.
 I = (np.max(cc_current)+np.min(cc_current))/2.0 #Used for constant current fitting, average of largest and lowest measured values.
 
-#B_c values based on constant voltage data
+#Bc values based on constant voltage data
 Bc = k_char*cv_current*np.sqrt(2)
 Bc_unc = k_char*cv_current_unc*np.sqrt(2)
+
+#Corrections made to Bc
+#Temporary rho value until measurement is done
+rho = np.abs(5.0-(cv_diameter/2.0))
+Bc *= 1.0-((rho**4)/((R**4)*((0.6583+0.29*(rho**2)/(R**2))**2)))
 
 #Magnetic Field Bc Prediction Model
 def magnetic_fit_model(x_val, a, b):
@@ -100,6 +105,10 @@ cv_a_unc = np.sqrt(cv_pcov[0][0]) #Uncertainty for fitted parameter a
 cv_I0_unc = I0_unc/np.sqrt(2) #Uncertainty for I0/sqrt(2)
 cv_unc_pt1 = np.sqrt((cv_current_unc)**2 + (cv_I0_unc)**2) #Uncertainty for x+I0/sqrt(2)
 cv_unc_model = (cv_popt[0]/(cv_current + I0/np.sqrt(2)))*np.sqrt((cv_a_unc/cv_popt[0])**2 + (cv_unc_pt1/(cv_current + I0/np.sqrt(2)))**2) #Uncertainty for a/(x+I0/sqrt(2))
+
+
+#Plotting magnetic fit model
+
 
 #Plotting constant current
 plt.figure(figsize = (8, 12))
