@@ -32,14 +32,14 @@ cc_current, cc_voltage, cc_ps_volt, cc_diameter, cc_current_unc, cc_voltage_unc,
 cc_current = np.abs(cc_current)
 
 #Eliminating the last point to correct for very small voltage
-cc_current = cc_current[:-2]
-cc_voltage = cc_voltage[:-2]
-cc_ps_volt = cc_ps_volt[:-2]
-cc_diameter = cc_diameter[:-2]
-cc_current_unc = cc_current_unc[:-2]
-cc_voltage_unc = cc_voltage_unc[:-2]
-cc_ps_volt_unc = cc_ps_volt_unc[:-2]
-cc_diameter_unc = cc_diameter_unc[:-2]
+cc_current = cc_current[:-1]
+cc_voltage = cc_voltage[:-1]
+cc_ps_volt = cc_ps_volt[:-1]
+cc_diameter = cc_diameter[:-1]
+cc_current_unc = cc_current_unc[:-1]
+cc_voltage_unc = cc_voltage_unc[:-1]
+cc_ps_volt_unc = cc_ps_volt_unc[:-1]
+cc_diameter_unc = cc_diameter_unc[:-1]
 
 #Constant Voltage data
 cv_current, cv_voltage, cv_ps_volt, cv_diameter, cv_current_unc, cv_voltage_unc, cv_ps_volt_unc, cv_diameter_unc = np.loadtxt("Constant_Voltage_data (w unc).csv", 
@@ -66,6 +66,7 @@ b_popt, b_pcov = curve_fit(magnetic_fit_model, cv_diameter/2.0, Bc, sigma = Bc_u
 
 #Calculation of I_0
 I0 = b_popt[1]/k_char
+I0_unc = np.sqrt(b_pcov[1][1])/k_char
 
 #Constant Current Prediction Model
 def const_Current_model(x_val, a):
@@ -73,7 +74,7 @@ def const_Current_model(x_val, a):
 
 #Constant Voltage Prediction Model
 def const_Voltage_model(x_val, a):
-    return a/(x_val+1.0/np.sqrt(2)*I0)
+    return a/(x_val+I0/np.sqrt(2))
 
 #Curve fitting for the constant voltage
 cv_popt, cv_pcov = curve_fit(const_Voltage_model, cv_current, cv_diameter/2.0, sigma = cv_diameter_unc/2.0, absolute_sigma = True)
@@ -81,6 +82,24 @@ cv_popt, cv_pcov = curve_fit(const_Voltage_model, cv_current, cv_diameter/2.0, s
 #Curve fitting for the constant current
 cc_popt, cc_pcov = curve_fit(const_Current_model, cc_voltage, cc_diameter/2.0, sigma = cc_diameter_unc/2.0, absolute_sigma = True)
 
+
+#Propagating model uncertainties
+#Magnetic fit model uncertainties
+b_a_unc = np.sqrt(b_pcov[0][0]) #Uncertainty for fitted parameter a
+b_b_unc = np.sqrt(b_pcov[1][1]) #Uncertainty for fitted parameter b
+b_unc_pt1 = (b_popt[0]/(cv_diameter/2.0))*np.sqrt((b_a_unc/b_popt[0])**2 + (cv_diameter_unc/cv_diameter)**2) #For a/x unc
+b_unc_model = np.sqrt((b_unc_pt1)**2 + (b_b_unc)**2) #For the addition of a/x and b
+
+#Constant current uncertainties
+cc_a_unc = np.sqrt(cc_pcov[0][0]) #Uncertainty for fitted parameter a
+cc_unc_pt1 = 0.5*np.sqrt(cc_voltage)*cc_voltage_unc/cc_voltage #Uncertainty for sqrt(x)
+cc_unc_model = cc_popt[0]*np.sqrt(cc_voltage)*np.sqrt((cc_a_unc/cc_popt[0])**2 + (cc_unc_pt1/np.sqrt(cc_voltage))**2)
+
+#Constant voltage uncertainties
+cv_a_unc = np.sqrt(cv_pcov[0][0]) #Uncertainty for fitted parameter a
+cv_I0_unc = I0_unc/np.sqrt(2) #Uncertainty for I0/sqrt(2)
+cv_unc_pt1 = np.sqrt((cv_current_unc)**2 + (cv_I0_unc)**2) #Uncertainty for x+I0/sqrt(2)
+cv_unc_model = (cv_popt[0]/(cv_current + I0/np.sqrt(2)))*np.sqrt((cv_a_unc/cv_popt[0])**2 + (cv_unc_pt1/(cv_current + I0/np.sqrt(2)))**2) #Uncertainty for a/(x+I0/sqrt(2))
 
 #Plotting constant current
 plt.figure(figsize = (8, 12))
@@ -133,6 +152,19 @@ plt.ylabel("Error: Radius (cm)")
 
 plt.legend()
 plt.show()
+
+
+#Reduced Chi Square Calculation
+#Constant current
+cc_chi2 = np.sum((cc_residual**2)/((cc_diameter_unc/2)**2 + cc_unc_model**2))
+cc_chi2_r = cc_chi2/(cc_voltage.size - cc_popt.size)
+print("Constant Current Reduced Chi2 is: ", cc_chi2_r)
+
+#Constant voltage
+cv_chi2 = np.sum((cv_residual**2)/((cv_diameter_unc/2)**2 + cv_unc_model**2))
+cv_chi2_r = cv_chi2/(cv_voltage.size - cv_popt.size)
+print("Constant Voltage Reduced Chi2 is: ", cv_chi2_r)
+
 
 
 #Printing estimated charge to mass ratio
