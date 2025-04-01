@@ -58,8 +58,16 @@ Bc = k_char*cv_current*np.sqrt(2)
 Bc_unc = k_char*cv_current_unc*np.sqrt(2)
 
 #Corrections made to Bc
+rho = np.zeros(cv_diameter.size)
+rg = 5.5
+for r in range(len(cv_diameter)):
+    if (cv_diameter[r]/2.0)<=(rg/2.0):
+        rho[r] = rg-cv_diameter[r]/2.0
+    elif (cv_diameter[r]/2.0)>(rg/2.0):
+        rho[r]=cv_diameter[r]/2.0
+
 #Temporary rho value until measurement is done
-rho = np.abs(5.0-(cv_diameter/2.0))
+# rho = np.abs(5.0-(cv_diameter/2.0))
 Bc *= 1.0-((rho**4)/((R**4)*((0.6583+0.29*(rho**2)/(R**2))**2)))
 
 #Magnetic Field Bc Prediction Model
