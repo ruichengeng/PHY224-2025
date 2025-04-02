@@ -18,8 +18,10 @@ import matplotlib.pyplot as plt
 
 #Global variables
 n = 130 #Number of coil turns
-R= 15.5 #Distance middle to middle of the coil's thickness
+R= .155 #SI Unit in meters. Distance middle to middle of the coil's thickness
+R_unc = 0.002
 k_char = (1.0/np.sqrt(2.0))*((4.0/5.0)**(3.0/2.0))*scipy.constants.mu_0*n/R #Characteristic of coil dimensions
+k_char_unc = k_char*R_unc/(R**2)
 
 #32 outer, 31 mid, 29.8 inner Radius
 #17.5 outer, 15.5 mid, 13.2 inner separation distance
@@ -30,6 +32,8 @@ cc_current, cc_voltage, cc_ps_volt, cc_diameter, cc_current_unc, cc_voltage_unc,
                                                   delimiter = ',', 
                                                   skiprows=1, unpack=True)
 cc_current = np.abs(cc_current)
+cc_diameter = cc_diameter*0.01 #Convertion to meters
+cc_diameter_unc = cc_diameter_unc*0.01
 
 #Eliminating the last point to correct for very small voltage
 cc_current = cc_current[:-1]
@@ -47,11 +51,14 @@ cv_current, cv_voltage, cv_ps_volt, cv_diameter, cv_current_unc, cv_voltage_unc,
                                                   skiprows=1, unpack=True)
 
 cv_current = np.abs(cv_current)
+cv_diameter *= 0.01
+cv_diameter_unc *= 0.01
 
 #Local variable for the fit
 #deltaV = 149.996 #Used for constant voltage fitting, average of largest and lowest measured values.
 deltaV = (np.max(cv_voltage)+np.min(cv_voltage))/2.0 #Used for constant voltage fitting, average of largest and lowest measured values.
 I = (np.max(cc_current)+np.min(cc_current))/2.0 #Used for constant current fitting, average of largest and lowest measured values.
+I_unc = I-np.min(cc_current)
 
 #Bc values based on constant voltage data
 Bc = k_char*cv_current*np.sqrt(2)
@@ -59,16 +66,22 @@ Bc_unc = k_char*cv_current_unc*np.sqrt(2)
 
 #Corrections made to Bc
 rho = np.zeros(cv_diameter.size)
-rg = 5.5
+rg = 5.5 * 0.01 #cm converted to m
 for r in range(len(cv_diameter)):
-    if (cv_diameter[r]/2.0)<=(rg/2.0):
+    if (cv_diameter[r]/2.0)<(rg/2.0):
         rho[r] = rg-cv_diameter[r]/2.0
-    elif (cv_diameter[r]/2.0)>(rg/2.0):
+    elif (cv_diameter[r]/2.0)>=(rg/2.0):
         rho[r]=cv_diameter[r]/2.0
+        
+# rho = rg-cv_diameter/2.0
 
 #Temporary rho value until measurement is done
 # rho = np.abs(5.0-(cv_diameter/2.0))
-Bc *= 1.0-((rho**4)/((R**4)*((0.6583+0.29*(rho**2)/(R**2))**2)))
+# Bc *= 1.0-((rho**4)/((R**4)*((0.6583+0.29*(rho**2)/(R**2))**2)))
+
+for p in range(len(rho)):
+    if rho[p]>0.2*R and rho[p]<0.5*R:
+        Bc[p] *= 1.0-((rho[p]**4)/((R**4)*((0.6583+0.29*(rho[p]**2)/(R**2))**2)))
 
 #Magnetic Field Bc Prediction Model
 def magnetic_fit_model(x_val, a, b):
@@ -123,7 +136,7 @@ plt.errorbar(cv_diameter/2.0, Bc, xerr=cv_diameter_unc/2.0, yerr = b_unc_model, 
 plt.plot(cv_diameter/2.0, magnetic_fit_model(cv_diameter/2.0, *b_popt), color = "green", label = "Magnetic Fit Model Prediction")
 plt.title("Magnetic Fit Prediction")
 plt.xlabel("Radius (cm)")
-plt.ylabel(r'Magnetic Field ($N*s*C^-1*cm^-1$)')
+plt.ylabel(r'Magnetic Field ($N*s*C^{-1}*cm^{-1}$)')
 plt.legend()
 
 #Residual calculation
@@ -216,8 +229,10 @@ print("Constant Voltage Reduced Chi2 is: ", cv_chi2_r)
 #Printing estimated charge to mass ratio
 #Via constant current
 cc_a_inv = 1.0/cc_popt[0]
-cc_a_inv /= (k_char*(I+ I0/np.sqrt(2)))
-print("Via constant current, the charge to mass ratio is: ", cc_a_inv**2, " C/kg ±")
+cc_a_inv_unc = np.abs(-1.0 * np.sqrt(cc_pcov[0][0])/(cc_popt[0]**2))
+cc_a_inv_pt2 = cc_a_inv / (k_char*(I+ I0/np.sqrt(2)))
+cc_a_inv_pt2_unc = cc_a_inv_pt2 * np.sqrt((cc_a_inv_unc/cc_a_inv)**2+((np.sqrt((I_unc)**2+(I0_unc/np.sqrt(2))**2))/(k_char*(I+ I0/np.sqrt(2))))**2)
+print("Via constant current, the charge to mass ratio is: ", cc_a_inv_pt2**2, " C/kg ±", 2*(cc_a_inv_pt2)*cc_a_inv_pt2_unc)
 
 #Via constant voltage
 cv_a_inv = 1.0/cv_popt[0]
