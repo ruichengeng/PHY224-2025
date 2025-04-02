@@ -62,7 +62,7 @@ I_unc = I-np.min(cc_current)
 
 #Bc values based on constant voltage data
 Bc = k_char*cv_current*np.sqrt(2)
-Bc_unc = k_char*cv_current_unc*np.sqrt(2)
+Bc_unc = k_char*cv_current*np.sqrt(2)*np.sqrt((k_char_unc/k_char)**2 + (cv_current_unc/cv_current)**2)
 
 #Corrections made to Bc
 rho = np.zeros(cv_diameter.size)
@@ -83,6 +83,9 @@ for p in range(len(rho)):
     if rho[p]>0.2*R and rho[p]<0.5*R:
         Bc[p] *= 1.0-((rho[p]**4)/((R**4)*((0.6583+0.29*(rho[p]**2)/(R**2))**2)))
 
+#Uncertainty due to this correction factor.
+##########################################################################################################################
+
 #Magnetic Field Bc Prediction Model
 def magnetic_fit_model(x_val, a, b):
     return a*(1.0/x_val) - b #Where b is B_e
@@ -92,7 +95,7 @@ b_popt, b_pcov = curve_fit(magnetic_fit_model, cv_diameter/2.0, Bc, sigma = Bc_u
 
 #Calculation of I_0
 I0 = b_popt[1]/k_char
-I0_unc = np.sqrt(b_pcov[1][1])/k_char
+I0_unc = I0*np.sqrt((np.sqrt(b_pcov[1][1])/b_popt[1])**2 + (k_char_unc/k_char)**2)
 
 #Constant Current Prediction Model
 def const_Current_model(x_val, a):
@@ -230,9 +233,11 @@ print("Constant Voltage Reduced Chi2 is: ", cv_chi2_r)
 #Via constant current
 cc_a_inv = 1.0/cc_popt[0]
 cc_a_inv_unc = np.abs(-1.0 * np.sqrt(cc_pcov[0][0])/(cc_popt[0]**2))
-cc_a_inv_pt2 = cc_a_inv / (k_char*(I+ I0/np.sqrt(2)))
-cc_a_inv_pt2_unc = cc_a_inv_pt2 * np.sqrt((cc_a_inv_unc/cc_a_inv)**2+((np.sqrt((I_unc)**2+(I0_unc/np.sqrt(2))**2))/(k_char*(I+ I0/np.sqrt(2))))**2)
-print("Via constant current, the charge to mass ratio is: ", cc_a_inv_pt2**2, " C/kg ±", 2*(cc_a_inv_pt2)*cc_a_inv_pt2_unc)
+cc_a_inv_pt2 = cc_a_inv/k_char
+cc_a_inv_pt2_unc = cc_a_inv_pt2*np.sqrt((cc_a_inv_unc/cc_a_inv)**2+(k_char_unc/k_char)**2)
+cc_a_inv_pt3 = cc_a_inv_pt2 / (I+ I0/np.sqrt(2))
+cc_a_inv_pt3_unc = cc_a_inv_pt3*np.sqrt((cc_a_inv_pt2_unc/cc_a_inv_pt2)**2+((np.sqrt(I_unc**2+(I0_unc/np.sqrt(2))**2))/(I+ I0/np.sqrt(2)))**2)
+print("Via constant current, the charge to mass ratio is: ", cc_a_inv_pt3**2, " C/kg ±", 2*(cc_a_inv_pt3)*cc_a_inv_pt3_unc)
 
 #Via constant voltage
 cv_a_inv = 1.0/cv_popt[0]
