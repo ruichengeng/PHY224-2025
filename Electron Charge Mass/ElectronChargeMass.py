@@ -116,7 +116,30 @@ cv_unc_model = (cv_popt[0]/(cv_current + I0/np.sqrt(2)))*np.sqrt((cv_a_unc/cv_po
 
 
 #Plotting magnetic fit model
+plt.figure(figsize = (8, 12))
+#Prediction plot
+plt.subplot(2, 1, 1)
+plt.errorbar(cv_diameter/2.0, Bc, xerr=cv_diameter_unc/2.0, yerr = b_unc_model, color = "red", fmt = 'o', label = "Calculation based on measurement data")
+plt.plot(cv_diameter/2.0, magnetic_fit_model(cv_diameter/2.0, *b_popt), color = "green", label = "Magnetic Fit Model Prediction")
+plt.title("Magnetic Fit Prediction")
+plt.xlabel("Radius (cm)")
+plt.ylabel(r'Magnetic Field ($N*s*C^-1*cm^-1$)')
+plt.legend()
 
+#Residual calculation
+b_prediction = magnetic_fit_model(cv_diameter/2.0, *b_popt)
+b_residual = Bc - b_prediction
+
+#Residual plot
+plt.subplot(2, 1, 2)
+plt.plot(cv_diameter/2.0, np.zeros(cv_voltage.size), color = "blue", label = "Zero residual reference line")
+plt.errorbar(cv_diameter/2.0, b_residual, xerr = cv_diameter_unc/2.0, yerr = b_unc_model, color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+plt.title("Residual of the magnetic fit model")
+plt.xlabel("Radius (cm)")
+plt.ylabel(r'Error: Magnetic Field ($N*s*C^{-1}*cm^{-1}$)')
+
+plt.legend()
+plt.show()
 
 #Plotting constant current
 plt.figure(figsize = (8, 12))
@@ -172,6 +195,12 @@ plt.show()
 
 
 #Reduced Chi Square Calculation
+#Magnetic fit
+#b_chi2 = np.sum((b_residual**2)/((b_unc_model)**2))
+b_chi2 = np.sum((b_residual**2)/((cv_diameter_unc/2.0)**2 + (b_unc_model)**2))
+b_chi2_r = b_chi2/(cv_diameter.size - b_popt.size)
+print("Magnetic Fit Reduced Chi2 is: ", b_chi2_r)
+
 #Constant current
 cc_chi2 = np.sum((cc_residual**2)/((cc_diameter_unc/2)**2 + cc_unc_model**2))
 cc_chi2_r = cc_chi2/(cc_voltage.size - cc_popt.size)
