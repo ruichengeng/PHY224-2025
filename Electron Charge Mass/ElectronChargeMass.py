@@ -66,12 +66,16 @@ Bc_unc = k_char*cv_current*np.sqrt(2)*np.sqrt((k_char_unc/k_char)**2 + (cv_curre
 
 #Corrections made to Bc
 rho = np.zeros(cv_diameter.size)
+rho_unc = np.zeros(cv_diameter_unc.size)
 rg = 5.5 * 0.01 #cm converted to m
+rg_unc = 0.2 * 0.01
 for r in range(len(cv_diameter)):
     if (cv_diameter[r]/2.0)<(rg/2.0):
         rho[r] = rg-cv_diameter[r]/2.0
+        rho_unc[r]=np.sqrt(rg_unc**2+(0.5*cv_diameter_unc[r])**2)
     elif (cv_diameter[r]/2.0)>=(rg/2.0):
         rho[r]=cv_diameter[r]/2.0
+        rho_unc[r]=0.5*cv_diameter_unc[r]
         
 # rho = rg-cv_diameter/2.0
 
@@ -82,6 +86,7 @@ for r in range(len(cv_diameter)):
 for p in range(len(rho)):
     if rho[p]>0.2*R and rho[p]<0.5*R:
         Bc[p] *= 1.0-((rho[p]**4)/((R**4)*((0.6583+0.29*(rho[p]**2)/(R**2))**2)))
+        Bc_unc[p] = Bc[p]*np.sqrt()#Need to add the stuff
 
 #Uncertainty due to this correction factor.
 ##########################################################################################################################
