@@ -54,8 +54,10 @@ cv_diameter_unc *= 0.01
 #Local variable for the fit
 deltaV = (np.max(cv_voltage)+np.min(cv_voltage))/2.0 #Used for constant voltage fitting, average of largest and lowest measured values.
 deltaV_unc = deltaV-np.min(cv_voltage)
+deltaV_unc=0.02
 I = (np.max(cc_current)+np.min(cc_current))/2.0 #Used for constant current fitting, average of largest and lowest measured values.
 I_unc = I-np.min(cc_current)
+I_unc = 0.002
 
 #Bc values based on constant voltage data
 Bc = k_char*cv_current*np.sqrt(2)
@@ -161,7 +163,8 @@ b_residual = Bc - b_prediction
 #Residual plot
 plt.subplot(2, 1, 2)
 plt.plot(100.0*cv_diameter/2.0, np.zeros(cv_voltage.size), color = "blue", label = "Zero residual reference line")
-plt.errorbar(100.0*cv_diameter/2.0, 1000.0*b_residual, xerr = 100.0*cv_diameter_unc/2.0, yerr = 1000.0*b_unc_model, color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+plt.errorbar(100.0*cv_diameter/2.0, 1000.0*b_residual, xerr = 100.0*(cv_diameter_unc/2.0), yerr = 1000.0*b_unc_model, color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+plt.yticks(np.arange(-0.5, 0.6, 0.1))
 plt.title("Residual of the magnetic fit model")
 plt.xlabel("Radius (cm)")
 plt.ylabel(r'Error: Magnetic Field ($mT$)')
@@ -187,7 +190,9 @@ cc_residual = cc_diameter/2.0 - cc_prediction
 #Residual plot
 plt.subplot(2, 1, 2)
 plt.plot(cc_voltage, np.zeros(cc_voltage.size), color = "blue", label = "Zero residual reference line")
-plt.errorbar(cc_voltage, 100.0*cc_residual, xerr = cc_voltage_unc, yerr = 100.0*np.sqrt(cc_diameter_unc**2 + np.sqrt(cc_pcov[0][0])**2), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+# plt.errorbar(cc_voltage, 100.0*cc_residual, xerr = cc_voltage_unc, yerr = 100.0*np.sqrt(cc_diameter_unc**2 + np.sqrt(cc_pcov[0][0])**2), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+plt.errorbar(cc_voltage, 100.0*cc_residual, xerr = cc_voltage_unc, yerr = 100.0*(cc_diameter_unc/2.0), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+plt.yticks(np.arange(-0.5, 0.6, 0.1))
 plt.title("Residual of the constant current model")
 plt.xlabel("Voltage(V)")
 plt.ylabel("Error: Radius (cm)")
@@ -213,7 +218,9 @@ cv_residual = cv_diameter/2.0 - cv_prediction
 #Residual plot
 plt.subplot(2, 1, 2)
 plt.plot(cv_current, np.zeros(cv_voltage.size), color = "blue", label = "Zero residual reference line")
-plt.errorbar(cv_current, 100.0*cv_residual, xerr = cv_current_unc, yerr = 100.0*np.sqrt(cv_diameter_unc**2 + np.sqrt(cv_pcov[0][0])**2), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+# plt.errorbar(cv_current, 100.0*cv_residual, xerr = cv_current_unc, yerr = 100.0*np.sqrt(cv_diameter_unc**2 + np.sqrt(cv_pcov[0][0])**2), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+plt.errorbar(cv_current, 100.0*cv_residual, xerr = cv_current_unc, yerr = 100.0*(cv_diameter_unc/2.0), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+plt.yticks(np.arange(-0.5, 0.6, 0.1))
 plt.title("Residual of the constant voltage model")
 plt.xlabel("Current (A)")
 plt.ylabel("Error: Radius (cm)")
