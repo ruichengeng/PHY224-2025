@@ -57,6 +57,7 @@ cv_diameter_unc *= 0.01
 #Local variable for the fit
 #deltaV = 149.996 #Used for constant voltage fitting, average of largest and lowest measured values.
 deltaV = (np.max(cv_voltage)+np.min(cv_voltage))/2.0 #Used for constant voltage fitting, average of largest and lowest measured values.
+deltaV_unc = deltaV-np.min(cv_voltage)
 I = (np.max(cc_current)+np.min(cc_current))/2.0 #Used for constant current fitting, average of largest and lowest measured values.
 I_unc = I-np.min(cc_current)
 
@@ -91,13 +92,13 @@ for p in range(len(rho)):
         temp_Bc_pt2 = 0.29*temp_Bc_pt1#For 0.29rho^2/R^2
         temp_Bc_pt2_unc = 0.29*temp_Bc_pt1_unc
         temp_Bc_pt3 = ((0.6583+0.29*(rho[p]**2)/(R**2))**2)#For ((0.6583+0.29*(rho[p]**2)/(R**2))**2)
-        temp_Bc_pt3_unc = 2.0*temp_Bc_pt3*temp_Bc_pt2_unc
+        temp_Bc_pt3_unc = 2.0*(0.6583+0.29*(rho[p]**2)/(R**2))*temp_Bc_pt2_unc
         temp_Bc_pt4 = (R**4)*temp_Bc_pt3 #For the entire denominator of the fraction
         temp_Bc_pt4_unc = temp_Bc_pt4*np.sqrt(((4.0*(R**3)*R_unc)/(R**4))**2 + (temp_Bc_pt3_unc/temp_Bc_pt3)**2)
         temp_Bc_pt5 = (rho[p]**4)/temp_Bc_pt4 #The entire fraction
-        temp_Bc_pt5_unc = temp_Bc_pt5*np.sqrt((rho_unc[p]/rho[p])**2 + (temp_Bc_pt4_unc/temp_Bc_pt4)**2)
+        temp_Bc_pt5_unc = temp_Bc_pt5*np.sqrt(((4.0*(rho[p]**3)*rho_unc[p])/rho[p])**2 + (temp_Bc_pt4_unc/temp_Bc_pt4)**2)
         temp_correction_unc = temp_Bc_pt5_unc * -1.0 #We have a minus sign in front
-        Bc_unc[p] = Bc[p]*np.sqrt((Bc_unc[p]/Bc[p])**2 + (temp_correction_unc/(1.0-((rho[p]**4)/((R**4)*((0.6583+0.29*(rho[p]**2)/(R**2))**2)))))**2)#Need to add the stuff
+        Bc_unc[p] = Bc[p]*np.sqrt((Bc_unc[p]/Bc[p])**2 + (temp_correction_unc/(1.0-temp_Bc_pt5))**2)#Need to add the stuff
 
 
 #Uncertainty due to this correction factor.
@@ -258,5 +259,9 @@ print("Via constant current, the charge to mass ratio is: ", cc_a_inv_pt3**2, " 
 
 #Via constant voltage
 cv_a_inv = 1.0/cv_popt[0]
-cv_a_inv*=(np.sqrt(deltaV)/k_char)
-print("Via constant voltage, the charge to mass ratio is: ", cv_a_inv**2, " C/kg ±")
+cv_a_inv_unc = np.abs(-1.0*np.sqrt(cv_pcov[0][0])/(cv_popt[0]**2))
+cv_a_inv_deltaV_k_char = (np.sqrt(deltaV)/k_char)
+cv_a_inv_deltaV_k_char_unc = cv_a_inv_deltaV_k_char*np.sqrt(((0.5*deltaV_unc/(deltaV**0.5))/(np.sqrt(deltaV)))**2 + (k_char_unc/k_char)**2)
+cv_a_inv_pt2 = cv_a_inv * cv_a_inv_deltaV_k_char
+cv_a_inv_pt2_unc = cv_a_inv_pt2 * np.sqrt((cv_a_inv_unc/cv_a_inv)**2 + ((cv_a_inv_deltaV_k_char_unc)/(cv_a_inv_deltaV_k_char))**2)
+print("Via constant voltage, the charge to mass ratio is: ", cv_a_inv_pt2**2, " C/kg ±", 2.0*cv_a_inv_pt2_unc*cv_a_inv_pt2)
