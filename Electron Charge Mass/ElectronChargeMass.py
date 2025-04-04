@@ -86,7 +86,19 @@ for r in range(len(cv_diameter)):
 for p in range(len(rho)):
     if rho[p]>0.2*R and rho[p]<0.5*R:
         Bc[p] *= 1.0-((rho[p]**4)/((R**4)*((0.6583+0.29*(rho[p]**2)/(R**2))**2)))
-        Bc_unc[p] = Bc[p]*np.sqrt()#Need to add the stuff
+        temp_Bc_pt1 = (rho[p]**2)/(R**2)#rho^2/R^2
+        temp_Bc_pt1_unc = temp_Bc_pt1*np.sqrt(((2.0*rho[p]*rho_unc[p])/(rho[p]**2))**2 + ((2.0*R*R_unc)/(R**2))**2)
+        temp_Bc_pt2 = 0.29*temp_Bc_pt1#For 0.29rho^2/R^2
+        temp_Bc_pt2_unc = 0.29*temp_Bc_pt1_unc
+        temp_Bc_pt3 = ((0.6583+0.29*(rho[p]**2)/(R**2))**2)#For ((0.6583+0.29*(rho[p]**2)/(R**2))**2)
+        temp_Bc_pt3_unc = 2.0*temp_Bc_pt3*temp_Bc_pt2_unc
+        temp_Bc_pt4 = (R**4)*temp_Bc_pt3 #For the entire denominator of the fraction
+        temp_Bc_pt4_unc = temp_Bc_pt4*np.sqrt(((4.0*(R**3)*R_unc)/(R**4))**2 + (temp_Bc_pt3_unc/temp_Bc_pt3)**2)
+        temp_Bc_pt5 = (rho[p]**4)/temp_Bc_pt4 #The entire fraction
+        temp_Bc_pt5_unc = temp_Bc_pt5*np.sqrt((rho_unc[p]/rho[p])**2 + (temp_Bc_pt4_unc/temp_Bc_pt4)**2)
+        temp_correction_unc = temp_Bc_pt5_unc * -1.0 #We have a minus sign in front
+        Bc_unc[p] = Bc[p]*np.sqrt((Bc_unc[p]/Bc[p])**2 + (temp_correction_unc/(1.0-((rho[p]**4)/((R**4)*((0.6583+0.29*(rho[p]**2)/(R**2))**2)))))**2)#Need to add the stuff
+
 
 #Uncertainty due to this correction factor.
 ##########################################################################################################################
@@ -143,8 +155,8 @@ plt.subplot(2, 1, 1)
 plt.errorbar(cv_diameter/2.0, Bc, xerr=cv_diameter_unc/2.0, yerr = b_unc_model, color = "red", fmt = 'o', label = "Calculation based on measurement data")
 plt.plot(cv_diameter/2.0, magnetic_fit_model(cv_diameter/2.0, *b_popt), color = "green", label = "Magnetic Fit Model Prediction")
 plt.title("Magnetic Fit Prediction")
-plt.xlabel("Radius (cm)")
-plt.ylabel(r'Magnetic Field ($N*s*C^{-1}*cm^{-1}$)')
+plt.xlabel("Radius (m)")
+plt.ylabel(r'Magnetic Field ($N*s*C^{-1}*m^{-1}$)')
 plt.legend()
 
 #Residual calculation
@@ -156,8 +168,8 @@ plt.subplot(2, 1, 2)
 plt.plot(cv_diameter/2.0, np.zeros(cv_voltage.size), color = "blue", label = "Zero residual reference line")
 plt.errorbar(cv_diameter/2.0, b_residual, xerr = cv_diameter_unc/2.0, yerr = b_unc_model, color = "red", fmt = 'o', label = "Residual between measured and predicted data")
 plt.title("Residual of the magnetic fit model")
-plt.xlabel("Radius (cm)")
-plt.ylabel(r'Error: Magnetic Field ($N*s*C^{-1}*cm^{-1}$)')
+plt.xlabel("Radius (m)")
+plt.ylabel(r'Error: Magnetic Field ($N*s*C^{-1}*m^{-1}$)')
 
 plt.legend()
 plt.show()
@@ -170,7 +182,7 @@ plt.errorbar(cc_voltage, (cc_diameter/2.0), xerr = cc_voltage_unc, yerr = cc_dia
 plt.plot(cc_voltage, const_Current_model(cc_voltage, *cc_popt), color = "green", label = "Model Prediction")
 plt.title("Constant Current Prediction Model")
 plt.xlabel("Voltage(V)")
-plt.ylabel("Radius (cm)")
+plt.ylabel("Radius (m)")
 plt.legend()
 
 #Residual calculation
@@ -183,7 +195,7 @@ plt.plot(cc_voltage, np.zeros(cc_voltage.size), color = "blue", label = "Zero re
 plt.errorbar(cc_voltage, cc_residual, xerr = cc_voltage_unc, yerr = np.sqrt(cc_diameter_unc**2 + np.sqrt(cc_pcov[0][0])**2), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
 plt.title("Residual of the constant current model")
 plt.xlabel("Voltage(V)")
-plt.ylabel("Error: Radius (cm)")
+plt.ylabel("Error: Radius (m)")
 
 plt.legend()
 plt.show()
@@ -196,7 +208,7 @@ plt.errorbar(cv_current, (cv_diameter/2.0), xerr = cv_current_unc, yerr = cv_dia
 plt.plot(cv_current, const_Voltage_model(cv_current, *cv_popt), color = "green", label = "Model Prediction")
 plt.title("Constant Voltage Prediction Model")
 plt.xlabel("Current (A)")
-plt.ylabel("Radius (cm)")
+plt.ylabel("Radius (m)")
 plt.legend()
 
 #Residual calculation
@@ -209,7 +221,7 @@ plt.plot(cv_current, np.zeros(cv_voltage.size), color = "blue", label = "Zero re
 plt.errorbar(cv_current, cv_residual, xerr = cv_current_unc, yerr = np.sqrt(cv_diameter_unc**2 + np.sqrt(cv_pcov[0][0])**2), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
 plt.title("Residual of the constant voltage model")
 plt.xlabel("Current (A)")
-plt.ylabel("Error: Radius (cm)")
+plt.ylabel("Error: Radius (m)")
 
 plt.legend()
 plt.show()
