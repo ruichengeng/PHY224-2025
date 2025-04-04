@@ -229,6 +229,13 @@ plt.legend()
 plt.show()
 
 
+#Printing the fitted parameters
+#Magnetic fit
+print("Magnetic Fitted Parameters: a = ", b_popt[0], "T*m ± ", np.sqrt(b_pcov[0][0]), "T*m")
+print("Magnetic Fitted Parameters: b = Be = ", b_popt[1], "T ± ", np.sqrt(b_pcov[1][1]), "T")
+print("Constant Current Fitted Parameter: a = ", cc_popt[0], "m/(V^1/2) ± ", np.sqrt(cc_pcov[0][0]), "m/(V^1/2)")
+print("Constant Voltage Fitted Parameter: a = ", cv_popt[0], "m*A ± ", np.sqrt(cv_pcov[0][0]), "m*A")
+
 #Reduced Chi Square Calculation
 #Magnetic fit
 #b_chi2 = np.sum((b_residual**2)/((b_unc_model)**2))
@@ -245,7 +252,6 @@ print("Constant Current Reduced Chi2 is: ", cc_chi2_r)
 cv_chi2 = np.sum((cv_residual**2)/((cv_diameter_unc/2)**2 + cv_unc_model**2))
 cv_chi2_r = cv_chi2/(cv_voltage.size - cv_popt.size)
 print("Constant Voltage Reduced Chi2 is: ", cv_chi2_r)
-
 
 
 #Printing estimated charge to mass ratio
