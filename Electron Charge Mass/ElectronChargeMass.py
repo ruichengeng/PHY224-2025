@@ -157,7 +157,7 @@ plt.errorbar(cv_diameter/2.0, Bc, xerr=cv_diameter_unc/2.0, yerr = b_unc_model, 
 plt.plot(cv_diameter/2.0, magnetic_fit_model(cv_diameter/2.0, *b_popt), color = "green", label = "Magnetic Fit Model Prediction")
 plt.title("Magnetic Fit Prediction")
 plt.xlabel("Radius (m)")
-plt.ylabel(r'Magnetic Field ($N*s*C^{-1}*m^{-1}$)')
+plt.ylabel(r'Magnetic Field ($T$)')
 plt.legend()
 
 #Residual calculation
@@ -170,7 +170,7 @@ plt.plot(cv_diameter/2.0, np.zeros(cv_voltage.size), color = "blue", label = "Ze
 plt.errorbar(cv_diameter/2.0, b_residual, xerr = cv_diameter_unc/2.0, yerr = b_unc_model, color = "red", fmt = 'o', label = "Residual between measured and predicted data")
 plt.title("Residual of the magnetic fit model")
 plt.xlabel("Radius (m)")
-plt.ylabel(r'Error: Magnetic Field ($N*s*C^{-1}*m^{-1}$)')
+plt.ylabel(r'Error: Magnetic Field ($T$)')
 
 plt.legend()
 plt.show()
