@@ -21,7 +21,7 @@ n = 130 #Number of coil turns
 R= .155 #SI Unit in meters. Distance middle to middle of the coil's thickness
 R_unc = 0.002
 k_char = (1.0/np.sqrt(2.0))*((4.0/5.0)**(3.0/2.0))*scipy.constants.mu_0*n/R #Characteristic of coil dimensions
-k_char_unc = k_char*R_unc/(R**2)
+k_char_unc = k_char*R_unc/(R)
 
 #Data reading
 #Constant Current data
@@ -84,10 +84,9 @@ for r in range(len(cv_diameter)):
 
 for p in range(len(rho)):
     if rho[p]>0.2*R and rho[p]<0.5*R:
-        Bc[p] *= 1.0-((rho[p]**4)/((R**4)*((0.6583+0.29*(rho[p]**2)/(R**2))**2)))
         #Propagating the uncertainty in the Bc correction
         temp_Bc_pt1 = (rho[p]**2)/(R**2)#rho^2/R^2
-        temp_Bc_pt1_unc = temp_Bc_pt1*np.sqrt(((2.0*rho[p]*rho_unc[p])/(rho[p]**2))**2 + ((2.0*R*R_unc)/(R**2))**2)
+        temp_Bc_pt1_unc = 2.0*temp_Bc_pt1*np.sqrt(((rho_unc[p]/rho[p])**2)**2 + ((R_unc)/(R))**2)
         temp_Bc_pt2 = 0.29*temp_Bc_pt1#For 0.29rho^2/R^2
         temp_Bc_pt2_unc = 0.29*temp_Bc_pt1_unc
         temp_Bc_pt3 = ((0.6583+0.29*(rho[p]**2)/(R**2))**2)#For ((0.6583+0.29*(rho[p]**2)/(R**2))**2)
@@ -97,7 +96,9 @@ for p in range(len(rho)):
         temp_Bc_pt5 = (rho[p]**4)/temp_Bc_pt4 #The entire fraction
         temp_Bc_pt5_unc = temp_Bc_pt5*np.sqrt(((4.0*(rho[p]**3)*rho_unc[p])/rho[p])**2 + (temp_Bc_pt4_unc/temp_Bc_pt4)**2)
         temp_correction_unc = temp_Bc_pt5_unc * -1.0 #We have a minus sign in front
-        Bc_unc[p] = Bc[p]*np.sqrt((Bc_unc[p]/Bc[p])**2 + (temp_correction_unc/(1.0-temp_Bc_pt5))**2)#Need to add the stuff
+        Bc_unc[p] = Bc[p]*(1.0-((rho[p]**4)/((R**4)*((0.6583+0.29*(rho[p]**2)/(R**2))**2))))*np.sqrt((Bc_unc[p]/Bc[p])**2 + (temp_correction_unc/(1.0-temp_Bc_pt5))**2)#Need to add the stuff
+        Bc[p] *= 1.0-((rho[p]**4)/((R**4)*((0.6583+0.29*(rho[p]**2)/(R**2))**2)))
+
 
 
 #Magnetic Field Bc Prediction Model
@@ -105,7 +106,7 @@ def magnetic_fit_model(x_val, a, b):
     return a*(1.0/x_val) - b #Where b is B_e
 
 #Curve fitting for the magnetic field to obtain B_e
-b_popt, b_pcov = curve_fit(magnetic_fit_model, cv_diameter/2.0, Bc, sigma = Bc_unc, absolute_sigma = True)
+b_popt, b_pcov = curve_fit(magnetic_fit_model, cv_diameter/2.0, Bc, p0=(4e-5,5e-5), sigma = Bc_unc, absolute_sigma = True)
 
 #Calculation of I_0
 I0 = b_popt[1]/k_char
@@ -268,8 +269,8 @@ cc_ratio_unc = 2*(cc_a_inv_pt3)*cc_a_inv_pt3_unc
 #Conversion for scientific notations
 cc_ratio *= 1e-11
 cc_ratio_unc *= 1e-11
-cc_ratio = round(cc_ratio, 1)
-cc_ratio_unc = round(cc_ratio_unc, 1)
+cc_ratio = round(cc_ratio, 2)
+cc_ratio_unc = round(cc_ratio_unc, 2)
 print("Via constant current, the charge to mass ratio is: ", cc_ratio, "x10^11 C/kg ±",  cc_ratio_unc, "x10^11 C/kg")
 
 #Via constant voltage
@@ -285,6 +286,6 @@ cv_ratio_unc = 2.0*cv_a_inv_pt2_unc*cv_a_inv_pt2
 #Conversion for scientific notations
 cv_ratio *= 1e-11
 cv_ratio_unc *= 1e-11
-cv_ratio = round(cv_ratio, 1)
-cv_ratio_unc = round(cv_ratio_unc, 1)
+cv_ratio = round(cv_ratio, 2)
+cv_ratio_unc = round(cv_ratio_unc, 2)
 print("Via constant voltage, the charge to mass ratio is: ", cv_ratio, "x10^11 C/kg ±", cv_ratio_unc, "x10^11 C/kg")
