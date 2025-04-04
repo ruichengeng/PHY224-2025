@@ -153,11 +153,11 @@ cv_unc_model = (cv_popt[0]/(cv_current + I0/np.sqrt(2)))*np.sqrt((cv_a_unc/cv_po
 plt.figure(figsize = (8, 12))
 #Prediction plot
 plt.subplot(2, 1, 1)
-plt.errorbar(cv_diameter/2.0, Bc, xerr=cv_diameter_unc/2.0, yerr = b_unc_model, color = "red", fmt = 'o', label = "Calculation based on measurement data")
-plt.plot(cv_diameter/2.0, magnetic_fit_model(cv_diameter/2.0, *b_popt), color = "green", label = "Magnetic Fit Model Prediction")
+plt.errorbar(100.0*cv_diameter/2.0, 1000.0*Bc, xerr=100.0*cv_diameter_unc/2.0, yerr = 1000.0*b_unc_model, color = "red", fmt = 'o', label = "Calculation based on measurement data")
+plt.plot(100.0*cv_diameter/2.0, 1000.0*magnetic_fit_model(cv_diameter/2.0, *b_popt), color = "green", label = "Magnetic Fit Model Prediction")
 plt.title("Magnetic Fit Prediction")
-plt.xlabel("Radius (m)")
-plt.ylabel(r'Magnetic Field ($T$)')
+plt.xlabel("Radius (cm)")
+plt.ylabel(r'Magnetic Field ($mT$)')
 plt.legend()
 
 #Residual calculation
@@ -166,11 +166,11 @@ b_residual = Bc - b_prediction
 
 #Residual plot
 plt.subplot(2, 1, 2)
-plt.plot(cv_diameter/2.0, np.zeros(cv_voltage.size), color = "blue", label = "Zero residual reference line")
-plt.errorbar(cv_diameter/2.0, b_residual, xerr = cv_diameter_unc/2.0, yerr = b_unc_model, color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+plt.plot(100.0*cv_diameter/2.0, np.zeros(cv_voltage.size), color = "blue", label = "Zero residual reference line")
+plt.errorbar(100.0*cv_diameter/2.0, 1000.0*b_residual, xerr = 100.0*cv_diameter_unc/2.0, yerr = 1000.0*b_unc_model, color = "red", fmt = 'o', label = "Residual between measured and predicted data")
 plt.title("Residual of the magnetic fit model")
-plt.xlabel("Radius (m)")
-plt.ylabel(r'Error: Magnetic Field ($T$)')
+plt.xlabel("Radius (cm)")
+plt.ylabel(r'Error: Magnetic Field ($mT$)')
 
 plt.legend()
 plt.show()
@@ -179,11 +179,11 @@ plt.show()
 plt.figure(figsize = (8, 12))
 #Prediction plot
 plt.subplot(2, 1, 1)
-plt.errorbar(cc_voltage, (cc_diameter/2.0), xerr = cc_voltage_unc, yerr = cc_diameter_unc/2.0, color = "red", fmt = 'o', label = "Measured Data")
-plt.plot(cc_voltage, const_Current_model(cc_voltage, *cc_popt), color = "green", label = "Model Prediction")
+plt.errorbar(cc_voltage, 100.0*(cc_diameter/2.0), xerr = cc_voltage_unc, yerr = 100.0*cc_diameter_unc/2.0, color = "red", fmt = 'o', label = "Measured Data")
+plt.plot(cc_voltage, 100.0*const_Current_model(cc_voltage, *cc_popt), color = "green", label = "Model Prediction")
 plt.title("Constant Current Prediction Model")
 plt.xlabel("Voltage(V)")
-plt.ylabel("Radius (m)")
+plt.ylabel("Radius (cm)")
 plt.legend()
 
 #Residual calculation
@@ -193,10 +193,10 @@ cc_residual = cc_diameter/2.0 - cc_prediction
 #Residual plot
 plt.subplot(2, 1, 2)
 plt.plot(cc_voltage, np.zeros(cc_voltage.size), color = "blue", label = "Zero residual reference line")
-plt.errorbar(cc_voltage, cc_residual, xerr = cc_voltage_unc, yerr = np.sqrt(cc_diameter_unc**2 + np.sqrt(cc_pcov[0][0])**2), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+plt.errorbar(cc_voltage, 100.0*cc_residual, xerr = cc_voltage_unc, yerr = 100.0*np.sqrt(cc_diameter_unc**2 + np.sqrt(cc_pcov[0][0])**2), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
 plt.title("Residual of the constant current model")
 plt.xlabel("Voltage(V)")
-plt.ylabel("Error: Radius (m)")
+plt.ylabel("Error: Radius (cm)")
 
 plt.legend()
 plt.show()
@@ -205,11 +205,11 @@ plt.show()
 plt.figure(figsize = (8, 12))
 #Prediction plot
 plt.subplot(2, 1, 1)
-plt.errorbar(cv_current, (cv_diameter/2.0), xerr = cv_current_unc, yerr = cv_diameter_unc/2.0, color = "red", fmt = 'o', label = "Measured Data")
-plt.plot(cv_current, const_Voltage_model(cv_current, *cv_popt), color = "green", label = "Model Prediction")
+plt.errorbar(cv_current, 100.0*(cv_diameter/2.0), xerr = cv_current_unc, yerr = 100.0*cv_diameter_unc/2.0, color = "red", fmt = 'o', label = "Measured Data")
+plt.plot(cv_current, 100.0*const_Voltage_model(cv_current, *cv_popt), color = "green", label = "Model Prediction")
 plt.title("Constant Voltage Prediction Model")
 plt.xlabel("Current (A)")
-plt.ylabel("Radius (m)")
+plt.ylabel("Radius (cm)")
 plt.legend()
 
 #Residual calculation
@@ -219,10 +219,10 @@ cv_residual = cv_diameter/2.0 - cv_prediction
 #Residual plot
 plt.subplot(2, 1, 2)
 plt.plot(cv_current, np.zeros(cv_voltage.size), color = "blue", label = "Zero residual reference line")
-plt.errorbar(cv_current, cv_residual, xerr = cv_current_unc, yerr = np.sqrt(cv_diameter_unc**2 + np.sqrt(cv_pcov[0][0])**2), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+plt.errorbar(cv_current, 100.0*cv_residual, xerr = cv_current_unc, yerr = 100.0*np.sqrt(cv_diameter_unc**2 + np.sqrt(cv_pcov[0][0])**2), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
 plt.title("Residual of the constant voltage model")
 plt.xlabel("Current (A)")
-plt.ylabel("Error: Radius (m)")
+plt.ylabel("Error: Radius (cm)")
 
 plt.legend()
 plt.show()
@@ -255,7 +255,15 @@ cc_a_inv_pt2 = cc_a_inv/k_char
 cc_a_inv_pt2_unc = cc_a_inv_pt2*np.sqrt((cc_a_inv_unc/cc_a_inv)**2+(k_char_unc/k_char)**2)
 cc_a_inv_pt3 = cc_a_inv_pt2 / (I+ I0/np.sqrt(2))
 cc_a_inv_pt3_unc = cc_a_inv_pt3*np.sqrt((cc_a_inv_pt2_unc/cc_a_inv_pt2)**2+((np.sqrt(I_unc**2+(I0_unc/np.sqrt(2))**2))/(I+ I0/np.sqrt(2)))**2)
-print("Via constant current, the charge to mass ratio is: ", cc_a_inv_pt3**2, " C/kg ±", 2*(cc_a_inv_pt3)*cc_a_inv_pt3_unc)
+cc_ratio = cc_a_inv_pt3**2
+cc_ratio_unc = 2*(cc_a_inv_pt3)*cc_a_inv_pt3_unc
+
+#Conversion for scientific notations
+cc_ratio *= 1e-11
+cc_ratio_unc *= 1e-11
+cc_ratio = round(cc_ratio, 1)
+cc_ratio_unc = round(cc_ratio_unc, 1)
+print("Via constant current, the charge to mass ratio is: ", cc_ratio, "x10^11 C/kg ±",  cc_ratio_unc, "x10^11 C/kg")
 
 #Via constant voltage
 cv_a_inv = 1.0/cv_popt[0]
@@ -264,4 +272,12 @@ cv_a_inv_deltaV_k_char = (np.sqrt(deltaV)/k_char)
 cv_a_inv_deltaV_k_char_unc = cv_a_inv_deltaV_k_char*np.sqrt(((0.5*deltaV_unc/(deltaV**0.5))/(np.sqrt(deltaV)))**2 + (k_char_unc/k_char)**2)
 cv_a_inv_pt2 = cv_a_inv * cv_a_inv_deltaV_k_char
 cv_a_inv_pt2_unc = cv_a_inv_pt2 * np.sqrt((cv_a_inv_unc/cv_a_inv)**2 + ((cv_a_inv_deltaV_k_char_unc)/(cv_a_inv_deltaV_k_char))**2)
-print("Via constant voltage, the charge to mass ratio is: ", cv_a_inv_pt2**2, " C/kg ±", 2.0*cv_a_inv_pt2_unc*cv_a_inv_pt2)
+cv_ratio = cv_a_inv_pt2**2
+cv_ratio_unc = 2.0*cv_a_inv_pt2_unc*cv_a_inv_pt2
+
+#Conversion for scientific notations
+cv_ratio *= 1e-11
+cv_ratio_unc *= 1e-11
+cv_ratio = round(cv_ratio, 1)
+cv_ratio_unc = round(cv_ratio_unc, 1)
+print("Via constant voltage, the charge to mass ratio is: ", cv_ratio, "x10^11 C/kg ±", cv_ratio_unc, "x10^11 C/kg")
