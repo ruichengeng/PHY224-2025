@@ -23,9 +23,6 @@ R_unc = 0.002
 k_char = (1.0/np.sqrt(2.0))*((4.0/5.0)**(3.0/2.0))*scipy.constants.mu_0*n/R #Characteristic of coil dimensions
 k_char_unc = k_char*R_unc/(R**2)
 
-#32 outer, 31 mid, 29.8 inner Radius
-#17.5 outer, 15.5 mid, 13.2 inner separation distance
-
 #Data reading
 #Constant Current data
 cc_current, cc_voltage, cc_ps_volt, cc_diameter, cc_current_unc, cc_voltage_unc, cc_ps_volt_unc, cc_diameter_unc = np.loadtxt("Constant_Current_data (w unc).csv", 
@@ -55,7 +52,6 @@ cv_diameter *= 0.01
 cv_diameter_unc *= 0.01
 
 #Local variable for the fit
-#deltaV = 149.996 #Used for constant voltage fitting, average of largest and lowest measured values.
 deltaV = (np.max(cv_voltage)+np.min(cv_voltage))/2.0 #Used for constant voltage fitting, average of largest and lowest measured values.
 deltaV_unc = deltaV-np.min(cv_voltage)
 I = (np.max(cc_current)+np.min(cc_current))/2.0 #Used for constant current fitting, average of largest and lowest measured values.
@@ -87,6 +83,7 @@ for r in range(len(cv_diameter)):
 for p in range(len(rho)):
     if rho[p]>0.2*R and rho[p]<0.5*R:
         Bc[p] *= 1.0-((rho[p]**4)/((R**4)*((0.6583+0.29*(rho[p]**2)/(R**2))**2)))
+        #Propagating the uncertainty in the Bc correction
         temp_Bc_pt1 = (rho[p]**2)/(R**2)#rho^2/R^2
         temp_Bc_pt1_unc = temp_Bc_pt1*np.sqrt(((2.0*rho[p]*rho_unc[p])/(rho[p]**2))**2 + ((2.0*R*R_unc)/(R**2))**2)
         temp_Bc_pt2 = 0.29*temp_Bc_pt1#For 0.29rho^2/R^2
@@ -100,9 +97,6 @@ for p in range(len(rho)):
         temp_correction_unc = temp_Bc_pt5_unc * -1.0 #We have a minus sign in front
         Bc_unc[p] = Bc[p]*np.sqrt((Bc_unc[p]/Bc[p])**2 + (temp_correction_unc/(1.0-temp_Bc_pt5))**2)#Need to add the stuff
 
-
-#Uncertainty due to this correction factor.
-##########################################################################################################################
 
 #Magnetic Field Bc Prediction Model
 def magnetic_fit_model(x_val, a, b):
