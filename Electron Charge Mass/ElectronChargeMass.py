@@ -5,9 +5,9 @@ Created on Mon Mar 24 16:08:54 2025
 Turki Almansoori
 Rui (Richard) Chen Geng Li
 
-Code created for PHY224 Free Choice Lab: Electron Mass Charge Ratio
+Code created for PHY224 Free Choice Lab: Electron Charge to Mass Ratio
 Prof. Sergio De La Barrera
-Due April 4th, 2025
+Due April 6th, 2025
 """
 
 #Necessary modules
@@ -29,10 +29,10 @@ cc_current, cc_voltage, cc_ps_volt, cc_diameter, cc_current_unc, cc_voltage_unc,
                                                   delimiter = ',', 
                                                   skiprows=1, unpack=True)
 cc_current = np.abs(cc_current)
-cc_diameter = cc_diameter*0.01 #Convertion to meters
-cc_diameter_unc = cc_diameter_unc*0.01
+cc_diameter = cc_diameter*0.01 #Convertion from cm to meters
+cc_diameter_unc = cc_diameter_unc*0.01 #Convertion from cm to meters
 
-#Eliminating the last point to correct for very small voltage
+#Eliminating the last point to correct for anomaly outlier (very small voltage)
 cc_current = cc_current[:-1]
 cc_voltage = cc_voltage[:-1]
 cc_ps_volt = cc_ps_volt[:-1]
@@ -48,16 +48,14 @@ cv_current, cv_voltage, cv_ps_volt, cv_diameter, cv_current_unc, cv_voltage_unc,
                                                   skiprows=1, unpack=True)
 
 cv_current = np.abs(cv_current)
-cv_diameter *= 0.01
-cv_diameter_unc *= 0.01
+cv_diameter *= 0.01 #Convertion from cm to meters
+cv_diameter_unc *= 0.01 #Convertion from cm to meters
 
 #Local variable for the fit
 deltaV = (np.max(cv_voltage)+np.min(cv_voltage))/2.0 #Used for constant voltage fitting, average of largest and lowest measured values.
-deltaV_unc = deltaV-np.min(cv_voltage)
-deltaV_unc=0.02
+deltaV_unc=0.02 #Uncertainty calculated based on device spec sheet
 I = (np.max(cc_current)+np.min(cc_current))/2.0 #Used for constant current fitting, average of largest and lowest measured values.
-I_unc = I-np.min(cc_current)
-I_unc = 0.002
+I_unc = 0.002 #Uncertainty calculated based on device spec sheet
 
 #Bc values based on constant voltage data
 Bc = k_char*cv_current*np.sqrt(2)
@@ -66,8 +64,9 @@ Bc_unc = k_char*cv_current*np.sqrt(2)*np.sqrt((k_char_unc/k_char)**2 + (cv_curre
 #Corrections made to Bc
 rho = np.zeros(cv_diameter.size)
 rho_unc = np.zeros(cv_diameter_unc.size)
-rg = 5.5 * 0.01 #cm converted to m
+rg = 5.5 * 0.01 #Position of the coil/bulb center, cm converted to m
 rg_unc = 0.2 * 0.01
+#Formula for rho based on the manual
 for r in range(len(cv_diameter)):
     if (cv_diameter[r]/2.0)<(rg/2.0):
         rho[r] = rg-cv_diameter[r]/2.0
@@ -75,13 +74,8 @@ for r in range(len(cv_diameter)):
     elif (cv_diameter[r]/2.0)>=(rg/2.0):
         rho[r]=cv_diameter[r]/2.0
         rho_unc[r]=0.5*cv_diameter_unc[r]
-        
-# rho = rg-cv_diameter/2.0
 
-#Temporary rho value until measurement is done
-# rho = np.abs(5.0-(cv_diameter/2.0))
-# Bc *= 1.0-((rho**4)/((R**4)*((0.6583+0.29*(rho**2)/(R**2))**2)))
-
+#Applying the correction factor and propagating relevant uncertainties
 for p in range(len(rho)):
     if rho[p]>0.2*R and rho[p]<0.5*R:
         #Propagating the uncertainty in the Bc correction
@@ -98,7 +92,6 @@ for p in range(len(rho)):
         temp_correction_unc = temp_Bc_pt5_unc * -1.0 #We have a minus sign in front
         Bc_unc[p] = Bc[p]*(1.0-((rho[p]**4)/((R**4)*((0.6583+0.29*(rho[p]**2)/(R**2))**2))))*np.sqrt((Bc_unc[p]/Bc[p])**2 + (temp_correction_unc/(1.0-temp_Bc_pt5))**2)#Need to add the stuff
         Bc[p] *= 1.0-((rho[p]**4)/((R**4)*((0.6583+0.29*(rho[p]**2)/(R**2))**2)))
-
 
 
 #Magnetic Field Bc Prediction Model
@@ -191,7 +184,6 @@ cc_residual = cc_diameter/2.0 - cc_prediction
 #Residual plot
 plt.subplot(2, 1, 2)
 plt.plot(cc_voltage, np.zeros(cc_voltage.size), color = "blue", label = "Zero residual reference line")
-# plt.errorbar(cc_voltage, 100.0*cc_residual, xerr = cc_voltage_unc, yerr = 100.0*np.sqrt(cc_diameter_unc**2 + np.sqrt(cc_pcov[0][0])**2), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
 plt.errorbar(cc_voltage, 100.0*cc_residual, xerr = cc_voltage_unc, yerr = 100.0*(cc_diameter_unc/2.0), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
 plt.yticks(np.arange(-0.5, 0.6, 0.1))
 plt.title("Residual of the constant current model")
@@ -219,7 +211,6 @@ cv_residual = cv_diameter/2.0 - cv_prediction
 #Residual plot
 plt.subplot(2, 1, 2)
 plt.plot(cv_current, np.zeros(cv_voltage.size), color = "blue", label = "Zero residual reference line")
-# plt.errorbar(cv_current, 100.0*cv_residual, xerr = cv_current_unc, yerr = 100.0*np.sqrt(cv_diameter_unc**2 + np.sqrt(cv_pcov[0][0])**2), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
 plt.errorbar(cv_current, 100.0*cv_residual, xerr = cv_current_unc, yerr = 100.0*(cv_diameter_unc/2.0), color = "red", fmt = 'o', label = "Residual between measured and predicted data")
 plt.yticks(np.arange(-0.4, 0.5, 0.1))
 plt.title("Residual of the constant voltage model")
@@ -255,6 +246,8 @@ print("Constant Voltage Reduced Chi2 is: ", cv_chi2_r)
 
 
 #Printing estimated charge to mass ratio
+#And propagating the relevant uncertainties for that of the charge to mass ratio
+
 #Via constant current
 cc_a_inv = 1.0/cc_popt[0]
 cc_a_inv_unc = np.abs(-1.0 * np.sqrt(cc_pcov[0][0])/(cc_popt[0]**2))
@@ -265,7 +258,7 @@ cc_a_inv_pt3_unc = cc_a_inv_pt3*np.sqrt((cc_a_inv_pt2_unc/cc_a_inv_pt2)**2+((np.
 cc_ratio = cc_a_inv_pt3**2
 cc_ratio_unc = 2*(cc_a_inv_pt3)*cc_a_inv_pt3_unc
 
-#Conversion for scientific notations
+#Conversion for scientific notations and rounding to 2 decimals
 cc_ratio *= 1e-11
 cc_ratio_unc *= 1e-11
 cc_ratio = round(cc_ratio, 2)
@@ -282,7 +275,7 @@ cv_a_inv_pt2_unc = cv_a_inv_pt2 * np.sqrt((cv_a_inv_unc/cv_a_inv)**2 + ((cv_a_in
 cv_ratio = cv_a_inv_pt2**2
 cv_ratio_unc = 2.0*cv_a_inv_pt2_unc*cv_a_inv_pt2
 
-#Conversion for scientific notations
+#Conversion for scientific notations and rounding to 2 decimals
 cv_ratio *= 1e-11
 cv_ratio_unc *= 1e-11
 cv_ratio = round(cv_ratio, 2)
