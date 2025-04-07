@@ -150,7 +150,7 @@ cv_unc_model = (cv_popt[0]/(cv_current + I0/np.sqrt(2)))*np.sqrt((cv_a_unc/cv_po
 plt.figure(figsize = (8, 12))
 #Prediction plot
 plt.subplot(2, 1, 1)
-plt.errorbar(100.0*cv_diameter/2.0, 1000.0*Bc, xerr=100.0*cv_diameter_unc/2.0, yerr = 1000.0*b_unc_model, color = "red", fmt = 'o', label = "Calculation based on measurement data")
+plt.errorbar(100.0*cv_diameter/2.0, 1000.0*Bc, xerr=100.0*cv_diameter_unc/2.0, yerr = 1000.0*Bc_unc, color = "red", fmt = 'o', label = "Calculation based on measurement data")
 plt.plot(100.0*cv_diameter/2.0, 1000.0*magnetic_fit_model(cv_diameter/2.0, *b_popt), color = "green", label = "Magnetic Fit Model Prediction")
 plt.title("Magnetic Fit Prediction")
 plt.xlabel("Radius (cm)")
@@ -164,8 +164,8 @@ b_residual = Bc - b_prediction
 #Residual plot
 plt.subplot(2, 1, 2)
 plt.plot(100.0*cv_diameter/2.0, np.zeros(cv_voltage.size), color = "blue", label = "Zero residual reference line")
-plt.errorbar(100.0*cv_diameter/2.0, 1000.0*b_residual, xerr = 100.0*(cv_diameter_unc/2.0), yerr = 1000.0*b_unc_model, color = "red", fmt = 'o', label = "Residual between measured and predicted data")
-plt.yticks(np.arange(-0.2, 0.25, 0.05))
+plt.errorbar(100.0*cv_diameter/2.0, 1000.0*b_residual, xerr = 100.0*(cv_diameter_unc/2.0), yerr = 1000.0*Bc_unc, color = "red", fmt = 'o', label = "Residual between measured and predicted data")
+plt.yticks(np.arange(-0.1, 0.11, 0.02))
 plt.title("Residual of the magnetic fit model")
 plt.xlabel("Radius (cm)")
 plt.ylabel(r'Error: Magnetic Field ($mT$)')
@@ -239,18 +239,17 @@ print("Constant Voltage Fitted Parameter: a = ", cv_popt[0], "m*A ± ", np.sqrt(
 
 #Reduced Chi Square Calculation
 #Magnetic fit
-#b_chi2 = np.sum((b_residual**2)/((b_unc_model)**2))
-b_chi2 = np.sum((b_residual**2)/((cv_diameter_unc/2.0)**2 + (b_unc_model)**2))
+b_chi2 = np.sum((b_residual**2)/((Bc_unc)**2))
 b_chi2_r = b_chi2/(cv_diameter.size - b_popt.size)
 print("Magnetic Fit Reduced Chi2 is: ", b_chi2_r)
 
 #Constant current
-cc_chi2 = np.sum((cc_residual**2)/((cc_diameter_unc/2)**2 + cc_unc_model**2))
+cc_chi2 = np.sum((cc_residual**2)/((cc_diameter_unc/2)**2))
 cc_chi2_r = cc_chi2/(cc_voltage.size - cc_popt.size)
 print("Constant Current Reduced Chi2 is: ", cc_chi2_r)
 
 #Constant voltage
-cv_chi2 = np.sum((cv_residual**2)/((cv_diameter_unc/2)**2 + cv_unc_model**2))
+cv_chi2 = np.sum((cv_residual**2)/((cv_diameter_unc/2)**2))
 cv_chi2_r = cv_chi2/(cv_voltage.size - cv_popt.size)
 print("Constant Voltage Reduced Chi2 is: ", cv_chi2_r)
 
